@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { auditResults, sites, siteVersions, tenants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { triggerWorkerGeneration } from "@/features/generation/worker-client";
+import { createSiteProject } from "@/features/generation/deploy";
 import { DESIGN_DIRECTIVES } from "@/features/generation/types";
 import { handleApiError } from "@/lib/errors";
 import type { AuditPipelineResult } from "@/features/audit/types";
@@ -71,12 +72,17 @@ export async function POST(req: NextRequest) {
         .where(eq(auditResults.id, parsed.auditResultId));
     }
 
-    // 3. Create site record
+    // 3. Create real Vercel project, then create site record
+    const vercelProjectId = await createSiteProject(
+      tenantId,
+      parsed.businessContext.businessName
+    );
+
     const [site] = await db
       .insert(sites)
       .values({
         tenantId,
-        vercelProjectId: `pending-${generationId.slice(0, 8)}`,
+        vercelProjectId,
         generationId,
         previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
         status: "demo",

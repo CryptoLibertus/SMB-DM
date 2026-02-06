@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { buildUserPrompt } from "./agent-config.js";
 import { createWorkerToolServer } from "./tools/index.js";
+import { triggerDeployment } from "../lib/deploy-trigger.js";
 import type { GenerateRequest, GenerateResponse, VersionResult } from "../types/api.js";
 import type { DesignDirective, BusinessContext } from "../types/generation.js";
 import type { AuditPipelineResult } from "../types/audit.js";
@@ -147,9 +148,30 @@ export async function runGeneration(
       }
     }
 
+    // Trigger Vercel deployment for successful versions
+    let previewUrl: string | undefined;
+    if (result.status === "ready") {
+      try {
+        const deployResult = await triggerDeployment(
+          req.siteId,
+          version.siteVersionId
+        );
+        previewUrl = deployResult.previewUrl;
+        console.log(
+          `[gen] Version ${version.versionNumber} deployed: ${previewUrl}`
+        );
+      } catch (deployErr) {
+        console.error(
+          `[gen] Version ${version.versionNumber} deploy failed (files stored, can retry):`,
+          deployErr
+        );
+      }
+    }
+
     results.push({
       versionNumber: version.versionNumber,
       status: result.status,
+      previewUrl,
       error: result.error,
       durationMs: Date.now() - versionStart,
     });
