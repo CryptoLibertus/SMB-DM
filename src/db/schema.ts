@@ -220,6 +220,7 @@ export const auditResults = pgTable("audit_results", {
     }>()
     .notNull()
     .default({ registrar: null, nameservers: [], switchable: false }),
+  completedStage: integer("completed_stage").notNull().default(0),
   screenshotDesktop: text("screenshot_desktop"),
   screenshotMobile: text("screenshot_mobile"),
   createdAt: timestamp("created_at", { withTimezone: true })

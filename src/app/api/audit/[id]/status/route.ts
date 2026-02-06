@@ -25,20 +25,21 @@ export async function GET(
 
   const row = rows[0];
 
-  // Determine the current stage based on which fields have been populated
+  // Determine the current stage from the completedStage counter
+  const completed = row.completedStage ?? 0;
   let stage: string;
   let stageNumber: number;
 
-  if (row.dnsInfo && row.dnsInfo.nameservers.length > 0) {
+  if (completed >= 4) {
     stage = "complete";
     stageNumber = 4;
-  } else if (row.ctaAnalysis && row.ctaAnalysis.elements.length > 0) {
+  } else if (completed === 3) {
     stage = "dns";
     stageNumber = 4;
-  } else if (row.mobileScore > 0) {
+  } else if (completed === 2) {
     stage = "cta";
     stageNumber = 3;
-  } else if (row.seoScore > 0) {
+  } else if (completed === 1) {
     stage = "mobile";
     stageNumber = 2;
   } else {
@@ -46,7 +47,7 @@ export async function GET(
     stageNumber = 1;
   }
 
-  const isComplete = stage === "complete";
+  const isComplete = completed >= 4;
 
   return NextResponse.json(
     success({

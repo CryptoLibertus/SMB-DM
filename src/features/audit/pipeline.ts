@@ -99,6 +99,7 @@ export async function runAuditPipeline(
       analyticsDetected: analytics,
       screenshotDesktop,
       screenshotMobile,
+      completedStage: 1,
     })
     .where(eq(auditResults.id, auditId));
 
@@ -117,7 +118,7 @@ export async function runAuditPipeline(
 
   await db
     .update(auditResults)
-    .set({ mobileScore: mobile.mobileScore })
+    .set({ mobileScore: mobile.mobileScore, completedStage: 2 })
     .where(eq(auditResults.id, auditId));
 
   // ── Stage 3: CTA ─────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ export async function runAuditPipeline(
 
   await db
     .update(auditResults)
-    .set({ ctaAnalysis: cta })
+    .set({ ctaAnalysis: cta, completedStage: 3 })
     .where(eq(auditResults.id, auditId));
 
   // ── Stage 4: DNS ──────────────────────────────────────────────────────
@@ -153,7 +154,7 @@ export async function runAuditPipeline(
 
   await db
     .update(auditResults)
-    .set({ dnsInfo: dns })
+    .set({ dnsInfo: dns, completedStage: 4 })
     .where(eq(auditResults.id, auditId));
 
   // ── Complete ──────────────────────────────────────────────────────────
