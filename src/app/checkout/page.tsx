@@ -5,17 +5,37 @@ import { Suspense, useState } from "react";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const auditId = searchParams.get("auditId");
   const versionId = searchParams.get("version");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCheckout = async () => {
     setLoading(true);
+    setError(null);
+
     try {
-      // Would POST to /api/billing/checkout to create Stripe Checkout session
-      // then redirect to session.url
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      window.alert("Would redirect to Stripe Checkout");
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId: auditId, // For MVP, the auditId maps to tenant via generation pipeline
+          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          cancelUrl: `${window.location.origin}/checkout?auditId=${auditId}&version=${versionId}&canceled=true`,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Failed to create checkout session");
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.data.url;
+    } catch {
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -76,8 +96,14 @@ function CheckoutContent() {
           {/* Version info */}
           {versionId && (
             <p className="mb-4 text-xs text-gray-400">
-              Selected version: {versionId} &middot; Demo: {token}
+              Selected: {versionId}
             </p>
+          )}
+
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           )}
 
           <button

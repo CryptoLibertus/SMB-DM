@@ -94,11 +94,36 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) return;
-    const encoded = encodeURIComponent(url.trim());
-    router.push(`/demo/preview?url=${encoded}`);
+    if (!url.trim() || submitting) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Failed to start audit");
+        return;
+      }
+
+      router.push(`/demo/${data.data.auditId}`);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -169,11 +194,16 @@ export default function Home() {
             </div>
             <button
               type="submit"
-              className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] sm:h-16 sm:rounded-l-none sm:text-lg"
+              disabled={submitting}
+              className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed sm:h-16 sm:rounded-l-none sm:text-lg"
             >
-              See Your Free Redesign
+              {submitting ? "Starting audit..." : "See Your Free Redesign"}
             </button>
           </form>
+
+          {error && (
+            <p className="mt-3 text-sm text-red-400">{error}</p>
+          )}
 
           <p className="animate-float-up-delay-4 mt-4 text-xs text-text-muted">
             No credit card required. Results in under 5 minutes.

@@ -7,6 +7,7 @@ interface BusinessInfo {
   industry: string;
   services: string;
   locations: string;
+  contactEmail: string;
 }
 
 interface BusinessInfoFormProps {
@@ -19,10 +20,13 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
     industry: "",
     services: "",
     locations: "",
+    contactEmail: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     onSubmit(form);
   };
 
@@ -32,38 +36,55 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
         Tell us about your business
       </h3>
       <p className="mb-4 text-sm text-gray-500">
-        We couldn&apos;t reach your website. Please provide some details so we can
-        generate your new site.
+        We&apos;ll use this to generate 3 custom website designs tailored to your
+        business.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="businessName" className="mb-1 block text-sm font-medium text-gray-700">
-            Business Name
-          </label>
-          <input
-            id="businessName"
-            type="text"
-            required
-            value={form.businessName}
-            onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Acme Plumbing"
-          />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="businessName" className="mb-1 block text-sm font-medium text-gray-700">
+              Business Name
+            </label>
+            <input
+              id="businessName"
+              type="text"
+              required
+              value={form.businessName}
+              onChange={(e) => setForm({ ...form, businessName: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Acme Plumbing"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="industry" className="mb-1 block text-sm font-medium text-gray-700">
+              Industry
+            </label>
+            <input
+              id="industry"
+              type="text"
+              required
+              value={form.industry}
+              onChange={(e) => setForm({ ...form, industry: e.target.value })}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="Plumbing & HVAC"
+            />
+          </div>
         </div>
 
         <div>
-          <label htmlFor="industry" className="mb-1 block text-sm font-medium text-gray-700">
-            Industry
+          <label htmlFor="contactEmail" className="mb-1 block text-sm font-medium text-gray-700">
+            Contact Email
           </label>
           <input
-            id="industry"
-            type="text"
+            id="contactEmail"
+            type="email"
             required
-            value={form.industry}
-            onChange={(e) => setForm({ ...form, industry: e.target.value })}
+            value={form.contactEmail}
+            onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Plumbing & HVAC"
+            placeholder="you@business.com"
           />
         </div>
 
@@ -99,9 +120,10 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
 
         <button
           type="submit"
-          className="mt-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          disabled={submitting}
+          className="mt-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Generate My Website
+          {submitting ? "Starting generation..." : "Generate My Website"}
         </button>
       </form>
     </div>
