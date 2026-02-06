@@ -58,7 +58,9 @@ async function generateVersion(
           "worker-tools": workerTools,
         },
         permissionMode: "bypassPermissions",
+        extraArgs: { "dangerously-skip-permissions": null },
         maxTurns: 40,
+        stderr: (data: string) => console.error(`[gen-stderr] v${versionNumber}: ${data}`),
       },
     })) {
       if (message.type === "result") {

@@ -95,29 +95,26 @@ router.post("/generate", authMiddleware, async (req, res) => {
     `[api] Received generation request ${generateRequest.generationId} for site ${generateRequest.siteId}`
   );
 
-  // Run generation synchronously — the Vercel side fires and doesn't wait.
-  // The worker runs until all versions are done, updating the DB along the way.
-  try {
-    const response = await runGeneration(generateRequest);
+  // Return 202 immediately — generation runs in background, updating DB as it goes.
+  res.status(202).json({
+    accepted: true,
+    generationId: generateRequest.generationId,
+  });
 
-    console.log(
-      `[api] Generation ${generateRequest.generationId} completed in ${response.totalDurationMs}ms`
-    );
-
-    res.json(response);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(
-      `[api] Generation ${generateRequest.generationId} failed:`,
-      message
-    );
-
-    res.status(500).json({
-      error: "Generation failed",
-      message,
-      generationId: generateRequest.generationId,
+  // Run generation in background (don't await in request handler)
+  runGeneration(generateRequest)
+    .then((response) => {
+      console.log(
+        `[api] Generation ${generateRequest.generationId} completed in ${response.totalDurationMs}ms`
+      );
+    })
+    .catch((err) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error(
+        `[api] Generation ${generateRequest.generationId} failed:`,
+        message
+      );
     });
-  }
 });
 
 export default router;

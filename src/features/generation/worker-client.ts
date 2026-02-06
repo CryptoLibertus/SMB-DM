@@ -49,7 +49,7 @@ export async function triggerWorkerGeneration(
       Authorization: `Bearer ${workerSecret}`,
     },
     body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10_000), // 10s timeout for the initial POST
+    signal: AbortSignal.timeout(30_000), // 30s timeout (Fly.io cold start can take 5-10s)
   });
 
   if (!res.ok) {

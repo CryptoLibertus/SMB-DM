@@ -27,8 +27,11 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist/ ./dist/
 
-# Create workspace directory
-RUN mkdir -p /tmp/workspaces
+# Create non-root user (Claude CLI refuses --dangerously-skip-permissions as root)
+RUN useradd -m -s /bin/bash worker
+RUN mkdir -p /tmp/workspaces && chown worker:worker /tmp/workspaces
+
+USER worker
 
 EXPOSE 8080
 
