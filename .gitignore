@@ -46,3 +46,7 @@ src/db/migrations/meta/
 # IDE
 .vscode/
 .idea/
+
+# Worker build artifacts
+worker/dist/
+worker/node_modules/
