@@ -123,3 +123,11 @@ Need to find an easy domain name for this.
 
 
 Write follow up email
+
+
+
+----
+
+take assets from original website to potentially use for new versions.
+
+Reduce to one generation after user selects what style of site.

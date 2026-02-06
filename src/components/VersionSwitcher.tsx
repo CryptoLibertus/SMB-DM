@@ -94,7 +94,7 @@ export default function VersionSwitcher({
         <div className="mt-4">
           {readyVersions[activeIndex] && (
             <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-              <div className="bg-gray-50 p-3">
+              <div className="flex items-center justify-between bg-gray-50 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {readyVersions[activeIndex].designMeta.colorPalette.map(
@@ -113,12 +113,21 @@ export default function VersionSwitcher({
                   </span>
                 </div>
               </div>
-              <div className="relative aspect-[16/10] bg-white">
-                <iframe
-                  src={readyVersions[activeIndex].previewUrl}
-                  className="h-full w-full border-0"
-                  title={`Version ${readyVersions[activeIndex].versionNumber} preview`}
-                />
+              <div className="flex flex-col items-center gap-3 bg-white px-4 py-8">
+                <a
+                  href={readyVersions[activeIndex].previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Open Preview in New Tab
+                </a>
+                <span className="max-w-full truncate text-xs text-gray-400">
+                  {readyVersions[activeIndex].previewUrl}
+                </span>
               </div>
             </div>
           )}
@@ -184,12 +193,21 @@ export default function VersionSwitcher({
                   </div>
                 </div>
               </div>
-              <div className="relative aspect-[9/16] bg-white sm:aspect-[16/10]">
-                <iframe
-                  src={version.previewUrl}
-                  className="h-full w-full border-0"
-                  title={`Version ${version.versionNumber} preview`}
-                />
+              <div className="flex flex-col items-center gap-3 bg-white px-4 py-8">
+                <a
+                  href={version.previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Open Preview
+                </a>
+                <span className="max-w-full truncate text-xs text-gray-400">
+                  {version.previewUrl}
+                </span>
               </div>
             </div>
           </div>

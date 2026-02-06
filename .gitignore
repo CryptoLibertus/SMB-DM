@@ -50,3 +50,4 @@ src/db/migrations/meta/
 # Worker build artifacts
 worker/dist/
 worker/node_modules/
+.env*.local
