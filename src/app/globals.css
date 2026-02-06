@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FAFAF8;
+  --foreground: #0C0F1A;
+  --accent: #3B5BFE;
+  --accent-hover: #2D4AE0;
+  --surface-dark: #0C0F1A;
+  --surface-dark-secondary: #141829;
+  --text-muted: #6B7194;
+  --text-light: #9CA3C4;
+  --border-subtle: #E5E5E0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-secondary: var(--surface-dark-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-light: var(--text-light);
+  --color-border-subtle: var(--border-subtle);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@keyframes grid-fade {
+  0% { opacity: 0.03; }
+  50% { opacity: 0.07; }
+  100% { opacity: 0.03; }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 91, 254, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(59, 91, 254, 0.1); }
+}
+
+.animate-float-up {
+  animation: float-up 0.7s ease-out both;
+}
+
+.animate-float-up-delay-1 {
+  animation: float-up 0.7s ease-out 0.1s both;
+}
+
+.animate-float-up-delay-2 {
+  animation: float-up 0.7s ease-out 0.2s both;
+}
+
+.animate-float-up-delay-3 {
+  animation: float-up 0.7s ease-out 0.3s both;
+}
+
+.animate-float-up-delay-4 {
+  animation: float-up 0.7s ease-out 0.4s both;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: grid-fade 6s ease-in-out infinite;
 }
