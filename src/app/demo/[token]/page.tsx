@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
 import VersionSwitcher from "@/components/VersionSwitcher";
@@ -63,9 +63,7 @@ export default function DemoPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
 
-  const genEventSourceRef = useRef<EventSource | null>(null);
-
-  // ── Audit polling (replaces SSE) ──────────────────────────────────────
+  // ── Audit polling ──────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
@@ -127,85 +125,68 @@ export default function DemoPage() {
     };
   }, [auditId]);
 
-  // ── Generation SSE ─────────────────────────────────────────────────────
+  // ── Generation polling ─────────────────────────────────────────────────
   useEffect(() => {
     if (!generationId) return;
+    let cancelled = false;
 
-    const es = new EventSource(`/api/generate/${generationId}/status`);
-    genEventSourceRef.current = es;
+    async function pollGen() {
+      while (!cancelled) {
+        try {
+          const res = await fetch(`/api/generate/${generationId}/status`);
+          if (!res.ok) {
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+            continue;
+          }
 
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+          const json = await res.json();
+          if (json.error) {
+            setErrorMessage(json.error);
+            setPhase("error");
+            return;
+          }
 
-        // Map generation stages to progress
-        if (data.stage === "initializing") setGenStage(0);
-        else if (data.stage === "generating_v1") setGenStage(1);
-        else if (data.stage === "generating_v2") setGenStage(2);
-        else if (data.stage === "generating_v3") setGenStage(3);
+          const data = json.data;
 
-        // Update version status when a version completes
-        if (data.versionNumber && data.versionStatus) {
-          setVersions((prev) => {
-            const existing = prev.find(
-              (v) => v.versionNumber === data.versionNumber
+          // Update versions from DB state
+          if (data.versions && data.versions.length > 0) {
+            setVersions(
+              data.versions.map((v: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: { colorPalette: string[]; layoutType: string; typography: string } | null }) => ({
+                id: v.id,
+                versionNumber: v.versionNumber,
+                previewUrl: v.previewUrl || "about:blank",
+                designMeta: v.designMeta || getDesignMeta(v.versionNumber),
+                status: v.status,
+              }))
             );
-            if (existing) {
-              return prev.map((v) =>
-                v.versionNumber === data.versionNumber
-                  ? {
-                      ...v,
-                      status: data.versionStatus,
-                      previewUrl: data.previewUrl || v.previewUrl,
-                    }
-                  : v
-              );
+
+            // Update gen stage based on ready count
+            const readyCount = data.versions.filter((v: { status: string }) => v.status === "ready").length;
+            setGenStage(Math.min(readyCount + 1, 3));
+          }
+
+          // Check for completion
+          if (data.isComplete) {
+            if (data.stage === "complete") {
+              setPhase("versions_ready");
+            } else {
+              setErrorMessage("All versions failed to generate");
+              setPhase("error");
             }
-            // New version appeared
-            if (data.versionStatus === "ready" || data.versionStatus === "generating") {
-              return [
-                ...prev,
-                {
-                  id: `v${data.versionNumber}`,
-                  versionNumber: data.versionNumber,
-                  previewUrl: data.previewUrl || "about:blank",
-                  designMeta: getDesignMeta(data.versionNumber),
-                  status: data.versionStatus,
-                },
-              ];
-            }
-            return prev;
-          });
+            return;
+          }
+        } catch {
+          // Network error, keep trying
         }
 
-        // Check for completion
-        if (data.stage === "complete") {
-          setPhase("versions_ready");
-          es.close();
-        } else if (data.stage === "error") {
-          setErrorMessage(data.message || "Generation failed");
-          setPhase("error");
-          es.close();
-        }
-      } catch {
-        // ignore parse errors
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
       }
-    };
+    }
 
-    es.onerror = () => {
-      setTimeout(() => {
-        if (es.readyState === EventSource.CLOSED) {
-          setPhase((current) => {
-            if (current === "generating") return "error";
-            return current;
-          });
-          setErrorMessage("Lost connection to generator. Please refresh.");
-        }
-      }, 5000);
-    };
+    pollGen();
 
     return () => {
-      es.close();
+      cancelled = true;
     };
   }, [generationId]);
 

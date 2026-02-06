@@ -6,11 +6,9 @@ import { models } from "@/lib/ai";
 import { buildGenerationPrompt, parseGeneratedFiles } from "./prompts";
 import { storeSiteFiles } from "./storage";
 import { createSiteProject } from "./deploy";
-import { pushEvent } from "./progress-store";
 import {
   DESIGN_DIRECTIVES,
   type BusinessContext,
-  type GenerationStageEvent,
   type DesignDirective,
 } from "./types";
 import type { AuditPipelineResult } from "@/features/audit/types";
@@ -28,13 +26,7 @@ export async function runGenerationPipeline(
   auditResultId: string,
   businessContext: BusinessContext
 ): Promise<void> {
-  const emit = (event: Omit<GenerationStageEvent, "generationId">) => {
-    pushEvent(generationId, { ...event, generationId });
-  };
-
   try {
-    emit({ stage: "initializing", message: "Preparing generation pipeline..." });
-
     // 1. Look up AuditResult
     const [auditResult] = await db
       .select()
@@ -43,11 +35,7 @@ export async function runGenerationPipeline(
       .limit(1);
 
     if (!auditResult) {
-      emit({
-        stage: "error",
-        message: "Audit result not found",
-        error: `AuditResult ${auditResultId} not found`,
-      });
+      console.error(`AuditResult ${auditResultId} not found`);
       return;
     }
 
@@ -100,6 +88,7 @@ export async function runGenerationPipeline(
       .values({
         tenantId,
         vercelProjectId,
+        generationId,
         previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
         status: "demo",
       })
@@ -131,13 +120,11 @@ export async function runGenerationPipeline(
     const generationPromises = DESIGN_DIRECTIVES.map(
       (directive, index) =>
         generateSingleVersion(
-          generationId,
           site.id,
           versionRecords[index].id,
           directive,
           businessContext,
-          auditData,
-          emit
+          auditData
         )
     );
 
@@ -149,25 +136,13 @@ export async function runGenerationPipeline(
     ).length;
 
     if (successCount === 0) {
-      emit({
-        stage: "error",
-        message: "All versions failed to generate",
-        error: "All 3 generation attempts failed",
-      });
+      console.error(`Generation ${generationId}: all 3 versions failed`);
       return;
     }
 
-    emit({
-      stage: "complete",
-      message: `Generation complete! ${successCount}/3 versions ready.`,
-    });
+    console.log(`Generation ${generationId}: ${successCount}/3 versions ready`);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    emit({
-      stage: "error",
-      message: "Generation pipeline failed",
-      error: message,
-    });
+    console.error(`Generation pipeline ${generationId} failed:`, err);
   }
 }
 
@@ -176,24 +151,13 @@ export async function runGenerationPipeline(
  * Returns true on success, false on failure.
  */
 async function generateSingleVersion(
-  generationId: string,
   siteId: string,
   siteVersionId: string,
   directive: DesignDirective,
   businessContext: BusinessContext,
-  auditData: AuditPipelineResult | null,
-  emit: (event: Omit<GenerationStageEvent, "generationId">) => void
+  auditData: AuditPipelineResult | null
 ): Promise<boolean> {
   const vNum = directive.versionNumber;
-  const stageKey =
-    `generating_v${vNum}` as GenerationStageEvent["stage"];
-
-  emit({
-    stage: stageKey,
-    message: `Generating version ${vNum}: ${directive.name}...`,
-    versionNumber: vNum,
-    versionStatus: "generating",
-  });
 
   try {
     // Build prompt and call AI
@@ -232,14 +196,6 @@ async function generateSingleVersion(
       })
       .where(eq(siteVersions.id, siteVersionId));
 
-    emit({
-      stage: stageKey,
-      message: `Version ${vNum} (${directive.name}) is ready!`,
-      versionNumber: vNum,
-      versionStatus: "ready",
-      previewUrl,
-    });
-
     return true;
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -250,14 +206,7 @@ async function generateSingleVersion(
       .set({ status: "failed" })
       .where(eq(siteVersions.id, siteVersionId));
 
-    emit({
-      stage: stageKey,
-      message: `Version ${vNum} failed to generate`,
-      versionNumber: vNum,
-      versionStatus: "failed",
-      error: errorMessage,
-    });
-
+    console.error(`Version ${vNum} failed:`, errorMessage);
     return false;
   }
 }

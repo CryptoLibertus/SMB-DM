@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { success, error } from "@/types";
 import { z } from "zod/v4";
 import { v4 as uuidv4 } from "uuid";
 import { runGenerationPipeline } from "@/features/generation/pipeline";
 import { handleApiError } from "@/lib/errors";
+
+export const maxDuration = 300;
 
 const GenerateRequestSchema = z.object({
   auditResultId: z.uuid(),
@@ -27,13 +29,17 @@ export async function POST(req: NextRequest) {
 
     const generationId = uuidv4();
 
-    // Start pipeline async — do not await
-    runGenerationPipeline(
-      generationId,
-      parsed.auditResultId,
-      parsed.businessContext
-    ).catch((err) => {
-      console.error(`Generation pipeline ${generationId} failed:`, err);
+    // Run pipeline after response — after() keeps the serverless function alive
+    after(async () => {
+      try {
+        await runGenerationPipeline(
+          generationId,
+          parsed.auditResultId,
+          parsed.businessContext
+        );
+      } catch (err) {
+        console.error(`Generation pipeline ${generationId} failed:`, err);
+      }
     });
 
     return NextResponse.json(

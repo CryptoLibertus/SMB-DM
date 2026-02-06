@@ -143,6 +143,7 @@ export const sites = pgTable("sites", {
   primaryDomain: text("primary_domain"),
   previewDomain: text("preview_domain").notNull(),
   status: siteStatusEnum("status").notNull().default("demo"),
+  generationId: text("generation_id"),
   selectedVersionId: uuid("selected_version_id"),
   currentDeploymentId: uuid("current_deployment_id"),
   createdAt: timestamp("created_at", { withTimezone: true })

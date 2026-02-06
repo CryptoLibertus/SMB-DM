@@ -1,46 +1,66 @@
-import { NextRequest } from "next/server";
-import { getEvents, cleanup } from "@/features/generation/progress-store";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { sites, siteVersions } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { success, error } from "@/types";
 
-// GET /api/generate/[id]/status — SSE stream for generation progress
+export const maxDuration = 60;
+
+// GET /api/generate/[id]/status — Poll for generation progress
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id: generationId } = await params;
 
-  const encoder = new TextEncoder();
-  let eventIndex = 0;
-  let intervalId: ReturnType<typeof setInterval>;
+  // Find the site by generationId
+  const [site] = await db
+    .select()
+    .from(sites)
+    .where(eq(sites.generationId, generationId))
+    .limit(1);
 
-  const stream = new ReadableStream({
-    start(controller) {
-      intervalId = setInterval(() => {
-        const { events, isComplete } = getEvents(id, eventIndex);
+  if (!site) {
+    // Site not created yet — pipeline is still initializing
+    return NextResponse.json(
+      success({
+        stage: "initializing",
+        isComplete: false,
+        versions: [],
+      })
+    );
+  }
 
-        for (const event of events) {
-          const data = `data: ${JSON.stringify(event)}\n\n`;
-          controller.enqueue(encoder.encode(data));
-          eventIndex++;
-        }
+  // Get all versions for this site
+  const versions = await db
+    .select()
+    .from(siteVersions)
+    .where(eq(siteVersions.siteId, site.id));
 
-        if (isComplete) {
-          clearInterval(intervalId);
-          // Schedule cleanup after a short delay
-          setTimeout(() => cleanup(id), 30_000);
-          controller.close();
-        }
-      }, 500);
-    },
-    cancel() {
-      clearInterval(intervalId);
-    },
-  });
+  // Determine stage from version statuses
+  const readyCount = versions.filter((v) => v.status === "ready").length;
+  const failedCount = versions.filter((v) => v.status === "failed").length;
+  const generatingCount = versions.filter((v) => v.status === "generating").length;
+  const isComplete = generatingCount === 0 && versions.length > 0;
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+  let stage = "generating";
+  if (isComplete) {
+    stage = readyCount > 0 ? "complete" : "error";
+  }
+
+  return NextResponse.json(
+    success({
+      stage,
+      isComplete,
+      readyCount,
+      failedCount,
+      versions: versions.map((v) => ({
+        id: v.id,
+        versionNumber: v.versionNumber,
+        status: v.status,
+        previewUrl: v.previewUrl || null,
+        designMeta: v.designMeta,
+      })),
+    })
+  );
 }
