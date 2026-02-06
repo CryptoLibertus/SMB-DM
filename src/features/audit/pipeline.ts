@@ -38,6 +38,18 @@ export async function runAuditPipeline(
 
   const crawlResult = await crawlUrl(targetUrl);
 
+  // If crawl failed and we got no HTML, bail out early
+  if (crawlResult.error && !crawlResult.html) {
+    onStage({
+      stage: 0,
+      totalStages: TOTAL_STAGES,
+      stageName: "error",
+      message: `Crawl failed: ${crawlResult.error}`,
+      auditId,
+    });
+    return;
+  }
+
   // Store screenshots
   let screenshotDesktop: string | null = null;
   let screenshotMobile: string | null = null;

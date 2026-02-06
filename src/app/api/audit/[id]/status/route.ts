@@ -1,76 +1,70 @@
-import { NextRequest } from "next/server";
-import {
-  getEvents,
-  cleanupAudit,
-} from "@/features/audit/progress-store";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { auditResults } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { success, error } from "@/types";
 
-const POLL_INTERVAL_MS = 500;
-const MAX_WAIT_MS = 90_000; // 90 second timeout for the full SSE connection
+export const maxDuration = 60;
 
-// GET /api/audit/[id]/status — SSE stream for audit progress
+// GET /api/audit/[id]/status — Poll for audit progress (replaces SSE)
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
 
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    async start(controller) {
-      let eventIndex = 0;
-      const startTime = Date.now();
+  const rows = await db
+    .select()
+    .from(auditResults)
+    .where(eq(auditResults.id, id))
+    .limit(1);
 
-      const sendEvent = (data: unknown) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
-      };
+  if (rows.length === 0) {
+    return NextResponse.json(error("Audit not found"), { status: 404 });
+  }
 
-      // Poll for new events from the progress store
-      while (Date.now() - startTime < MAX_WAIT_MS) {
-        const { events, isComplete } = getEvents(id, eventIndex);
+  const row = rows[0];
 
-        for (const event of events) {
-          sendEvent(event);
-          eventIndex++;
-        }
+  // Determine the current stage based on which fields have been populated
+  let stage: string;
+  let stageNumber: number;
 
-        if (isComplete) {
-          // Cleanup the in-memory store after streaming is done
-          cleanupAudit(id);
-          break;
-        }
+  if (row.dnsInfo && row.dnsInfo.nameservers.length > 0) {
+    stage = "complete";
+    stageNumber = 4;
+  } else if (row.ctaAnalysis && row.ctaAnalysis.elements.length > 0) {
+    stage = "dns";
+    stageNumber = 4;
+  } else if (row.mobileScore > 0) {
+    stage = "cta";
+    stageNumber = 3;
+  } else if (row.seoScore > 0) {
+    stage = "mobile";
+    stageNumber = 2;
+  } else {
+    stage = "crawling";
+    stageNumber = 1;
+  }
 
-        // Check if client disconnected
-        if (req.signal.aborted) {
-          break;
-        }
+  const isComplete = stage === "complete";
 
-        // Wait before next poll
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-      }
-
-      // If we timed out, send a timeout event
-      if (Date.now() - startTime >= MAX_WAIT_MS) {
-        sendEvent({
-          stage: 0,
-          totalStages: 4,
-          stageName: "error",
-          message: "Audit timed out. Partial results may be available.",
-          auditId: id,
-        });
-        cleanupAudit(id);
-      }
-
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+  return NextResponse.json(
+    success({
+      stage,
+      stageNumber,
+      totalStages: 4,
+      isComplete,
+      auditResult: {
+        seoScore: row.seoScore,
+        mobileScore: row.mobileScore,
+        ctaAnalysis: row.ctaAnalysis,
+        metaTags: row.metaTags,
+        analyticsDetected: row.analyticsDetected,
+        dnsInfo: row.dnsInfo,
+        screenshotDesktop: row.screenshotDesktop,
+        screenshotMobile: row.screenshotMobile,
+        targetUrl: row.targetUrl,
+      },
+    })
+  );
 }

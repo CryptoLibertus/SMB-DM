@@ -113,7 +113,7 @@ export default function Home() {
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (!res.ok || data.error) {
         setError(data.error || "Failed to start audit");
         return;
       }

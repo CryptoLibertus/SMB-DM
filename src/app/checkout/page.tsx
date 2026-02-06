@@ -27,7 +27,7 @@ function CheckoutContent() {
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (!res.ok || data.error) {
         setError(data.error || "Failed to create checkout session");
         return;
       }

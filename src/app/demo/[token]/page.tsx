@@ -23,7 +23,7 @@ const GENERATION_STAGES = [
   { label: "Version 3", description: "Warm & Friendly" },
 ];
 
-// ── Types matching the SSE events ───────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────────────────────
 interface AuditResult {
   seoScore: number;
   mobileScore: number;
@@ -46,6 +46,8 @@ interface Version {
 
 type Phase = "auditing" | "audit_done" | "generating" | "versions_ready" | "error";
 
+const POLL_INTERVAL_MS = 2_000;
+
 export default function DemoPage() {
   const params = useParams();
   const router = useRouter();
@@ -60,74 +62,68 @@ export default function DemoPage() {
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
-  const [targetUrl, setTargetUrl] = useState<string>("");
 
-  const auditEventSourceRef = useRef<EventSource | null>(null);
   const genEventSourceRef = useRef<EventSource | null>(null);
 
-  // ── Audit SSE ──────────────────────────────────────────────────────────
+  // ── Audit polling (replaces SSE) ──────────────────────────────────────
   useEffect(() => {
-    const es = new EventSource(`/api/audit/${auditId}/status`);
-    auditEventSourceRef.current = es;
+    let cancelled = false;
 
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+    async function poll() {
+      while (!cancelled) {
+        try {
+          const res = await fetch(`/api/audit/${auditId}/status`);
+          if (!res.ok) {
+            // Audit might not exist yet, keep polling
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+            continue;
+          }
 
-        // Track URL from first event
-        if (data.auditId) {
-          setTargetUrl((prev) => prev || data.auditId);
+          const json = await res.json();
+          if (json.error) {
+            setErrorMessage(json.error);
+            setPhase("error");
+            return;
+          }
+
+          const data = json.data;
+
+          // Update stage number
+          if (typeof data.stageNumber === "number") {
+            setAuditStage(data.stageNumber);
+          }
+
+          // Extract partial results
+          if (data.auditResult) {
+            const p = data.auditResult;
+            setAuditResult({
+              seoScore: p.seoScore ?? 0,
+              mobileScore: p.mobileScore ?? 0,
+              ctaCount: p.ctaAnalysis?.elements?.length ?? 0,
+              hasAnalytics: p.analyticsDetected
+                ? p.analyticsDetected.ga4 || p.analyticsDetected.gtm
+                : false,
+              targetUrl: p.targetUrl ?? "",
+            });
+          }
+
+          // Check for completion
+          if (data.isComplete) {
+            setPhase("audit_done");
+            return;
+          }
+        } catch {
+          // Network error, keep trying
         }
 
-        // Map stage number to progress
-        if (typeof data.stage === "number") {
-          setAuditStage(data.stage);
-        }
-
-        // Extract partial results as they arrive
-        if (data.partialResults) {
-          const p = data.partialResults;
-          setAuditResult((prev) => ({
-            seoScore: p.seoScore ?? prev?.seoScore ?? 0,
-            mobileScore: p.mobileScore ?? prev?.mobileScore ?? 0,
-            ctaCount: p.ctaAnalysis?.elements?.length ?? prev?.ctaCount ?? 0,
-            hasAnalytics: p.analyticsDetected
-              ? p.analyticsDetected.ga4 || p.analyticsDetected.gtm
-              : prev?.hasAnalytics ?? false,
-            targetUrl: p.targetUrl ?? prev?.targetUrl ?? "",
-          }));
-        }
-
-        // Check for completion or error
-        if (data.stageName === "complete") {
-          setPhase("audit_done");
-          es.close();
-        } else if (data.stageName === "error") {
-          setErrorMessage(data.message || "Audit failed");
-          setPhase("error");
-          es.close();
-        }
-      } catch {
-        // ignore parse errors
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
       }
-    };
+    }
 
-    es.onerror = () => {
-      // EventSource will auto-reconnect; if it fails, show error
-      setTimeout(() => {
-        if (es.readyState === EventSource.CLOSED) {
-          // Only error if we haven't already moved past auditing
-          setPhase((current) => {
-            if (current === "auditing") return "error";
-            return current;
-          });
-          setErrorMessage("Lost connection to audit. Please refresh.");
-        }
-      }, 5000);
-    };
+    poll();
 
     return () => {
-      es.close();
+      cancelled = true;
     };
   }, [auditId]);
 
@@ -251,7 +247,7 @@ export default function DemoPage() {
         });
 
         const data = await res.json();
-        if (!res.ok || !data.success) {
+        if (!res.ok || data.error) {
           setErrorMessage(data.error || "Failed to start generation");
           setPhase("error");
           return;
@@ -333,7 +329,7 @@ export default function DemoPage() {
               mobileScore={auditResult.mobileScore}
               ctaCount={auditResult.ctaCount}
               hasAnalytics={auditResult.hasAnalytics}
-              targetUrl={auditResult.targetUrl || targetUrl}
+              targetUrl={auditResult.targetUrl}
             />
           </div>
         )}

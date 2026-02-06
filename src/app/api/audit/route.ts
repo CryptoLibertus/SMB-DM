@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { auditResults } from "@/db/schema";
 import { success, error } from "@/types";
 import { runAuditPipeline } from "@/features/audit";
-import { pushEvent } from "@/features/audit/progress-store";
+
+export const maxDuration = 60;
 
 const auditRequestSchema = z.object({
   url: z.url(),
@@ -48,18 +49,12 @@ export async function POST(req: NextRequest) {
       })
       .returning({ id: auditResults.id });
 
-    // Start pipeline in the background (don't await)
-    runAuditPipeline(auditResult.id, url, (event) => {
-      pushEvent(auditResult.id, event);
+    // Start pipeline in the background (don't await).
+    // Progress is tracked via DB writes in the pipeline; frontend polls the status endpoint.
+    runAuditPipeline(auditResult.id, url, () => {
+      // no-op: progress is tracked in the DB, polled by GET /api/audit/[id]/status
     }).catch((err) => {
       console.error(`Audit pipeline failed for ${auditResult.id}:`, err);
-      pushEvent(auditResult.id, {
-        stage: 0,
-        totalStages: 4,
-        stageName: "error",
-        message: "Audit failed unexpectedly",
-        auditId: auditResult.id,
-      });
     });
 
     return NextResponse.json(
