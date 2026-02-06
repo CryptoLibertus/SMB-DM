@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import { auditResults } from "@/db/schema";
@@ -49,12 +49,14 @@ export async function POST(req: NextRequest) {
       })
       .returning({ id: auditResults.id });
 
-    // Start pipeline in the background (don't await).
-    // Progress is tracked via DB writes in the pipeline; frontend polls the status endpoint.
-    runAuditPipeline(auditResult.id, url, () => {
-      // no-op: progress is tracked in the DB, polled by GET /api/audit/[id]/status
-    }).catch((err) => {
-      console.error(`Audit pipeline failed for ${auditResult.id}:`, err);
+    // Run pipeline after response is sent — `after()` keeps the serverless
+    // function alive so the work actually completes on Vercel.
+    after(async () => {
+      try {
+        await runAuditPipeline(auditResult.id, url, () => {});
+      } catch (err) {
+        console.error(`Audit pipeline failed for ${auditResult.id}:`, err);
+      }
     });
 
     return NextResponse.json(
