@@ -30,10 +30,25 @@ export async function createProject(name: string) {
   return res.json();
 }
 
+export async function getProject(projectId: string) {
+  const res = await fetch(
+    withTeamId(`${VERCEL_API_BASE}/v9/projects/${projectId}`),
+    { headers },
+  );
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to get project: ${res.status} ${body}`);
+  }
+  return res.json();
+}
+
 export async function createDeployment(
   projectId: string,
   files: Record<string, string>
 ) {
+  // Look up the project name (required by Vercel deployments API)
+  const project = await getProject(projectId);
+
   // Vercel API expects files as array of { file, data } with base64-encoded content
   const fileArray = Object.entries(files).map(([filePath, content]) => ({
     file: filePath,
@@ -47,6 +62,7 @@ export async function createDeployment(
       method: "POST",
       headers,
       body: JSON.stringify({
+        name: project.name,
         project: projectId,
         files: fileArray,
         projectSettings: { framework: "nextjs" },
