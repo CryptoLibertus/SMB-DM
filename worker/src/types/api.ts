@@ -11,6 +11,18 @@ export interface GenerateRequest {
   }[];
   businessContext: BusinessContext;
   auditData: AuditPipelineResult | null;
+  aiAnalysis?: {
+    summary: string;
+    overallGrade: string;
+    findings: {
+      category: string;
+      severity: "critical" | "warning" | "info";
+      title: string;
+      detail: string;
+      recommendation: string;
+    }[];
+    topPriorities: string[];
+  } | null;
 }
 
 export interface VersionResult {

@@ -33,4 +33,8 @@ export interface AiAnalysis {
   overallGrade: string;
   findings: AiAnalysisFinding[];
   topPriorities: string[];
+  detectedIndustry?: string;
+  detectedServices?: string[];
+  detectedLocations?: string[];
+  detectedBusinessName?: string;
 }

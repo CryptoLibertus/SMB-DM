@@ -1,13 +1,27 @@
 import type { DesignDirective, BusinessContext } from "../types/generation.js";
 import type { AuditPipelineResult } from "../types/audit.js";
 
+interface AiAnalysisData {
+  summary: string;
+  overallGrade: string;
+  findings: {
+    category: string;
+    severity: "critical" | "warning" | "info";
+    title: string;
+    detail: string;
+    recommendation: string;
+  }[];
+  topPriorities: string[];
+}
+
 export function buildUserPrompt(
   directive: DesignDirective,
   businessContext: BusinessContext,
   auditData: AuditPipelineResult | null,
   workspacePath: string,
   siteId: string,
-  siteVersionId: string
+  siteVersionId: string,
+  aiAnalysis?: AiAnalysisData | null
 ): string {
   let prompt = `Generate a complete Next.js website for this business.
 
@@ -56,6 +70,36 @@ Use this data to improve upon the existing site. Address the weaknesses found (m
 Use these client images where they fit the content. For hero backgrounds, section visuals, and any gaps, use high-quality royalty-free images from Unsplash (source.unsplash.com) or Pexels.
 ${imageList}`;
     }
+  }
+
+  if (aiAnalysis) {
+    const severityIcon = (s: string) =>
+      s === "critical" ? "🔴" : s === "warning" ? "🟡" : "🔵";
+
+    const findingsText = aiAnalysis.findings
+      .map(
+        (f) =>
+          `${severityIcon(f.severity)} **${f.title}** (${f.category}): ${f.detail}\n   → ${f.recommendation}`
+      )
+      .join("\n");
+
+    const prioritiesText = aiAnalysis.topPriorities
+      .map((p, i) => `${i + 1}. ${p}`)
+      .join("\n");
+
+    prompt += `
+
+## AI Deep Analysis — CRO Expert Findings
+Overall Grade: ${aiAnalysis.overallGrade}
+${aiAnalysis.summary}
+
+### Issues to Address:
+${findingsText}
+
+### Top Priorities:
+${prioritiesText}
+
+IMPORTANT: The new site MUST address these specific issues. Use the recommendations as design requirements.`;
   }
 
   prompt += `

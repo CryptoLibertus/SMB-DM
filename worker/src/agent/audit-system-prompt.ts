@@ -50,5 +50,15 @@ Use exactly these categories:
 - Focus on what matters most for a small business: getting phone calls, form submissions, and foot traffic.
 - Keep the executive summary to 2-3 sentences.
 - Top priorities should be the 3 highest-impact changes, written as clear action items.
-- Aim for 6-12 findings total across all categories.`;
+- Aim for 6-12 findings total across all categories.
+
+## Business Context Extraction
+
+While analyzing the site, extract the following business details and include them in your \`store_analysis\` call:
+- **detectedBusinessName**: The business name as displayed on the site (from logo, title, or header)
+- **detectedIndustry**: The most fitting industry category (e.g. "Plumbing & HVAC", "Dental", "Legal", "Auto Repair", "Restaurant / Food Service", "Real Estate", etc.)
+- **detectedServices**: A list of specific services offered (e.g. ["Drain cleaning", "Water heater repair", "Emergency plumbing"])
+- **detectedLocations**: Cities, neighborhoods, or service areas mentioned on the site (e.g. ["Austin", "Round Rock", "Cedar Park"])
+
+These help pre-fill the customer's business profile form.`;
 }

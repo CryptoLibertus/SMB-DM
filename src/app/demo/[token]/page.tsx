@@ -81,8 +81,13 @@ export default function DemoPage() {
       recommendation: string;
     }[];
     topPriorities: string[];
+    detectedIndustry?: string;
+    detectedServices?: string[];
+    detectedLocations?: string[];
+    detectedBusinessName?: string;
   } | null>(null);
   const [aiAnalysisStatus, setAiAnalysisStatus] = useState<string | null>(null);
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
 
   // ── Scroll to business form ─────────────────────────────────────────────
   const scrollToForm = useCallback(() => {
@@ -112,6 +117,10 @@ export default function DemoPage() {
           }
 
           const data = json.data;
+
+          if (data.contactEmail) {
+            setContactEmail(data.contactEmail);
+          }
 
           if (typeof data.stageNumber === "number") {
             setAuditStage(data.stageNumber);
@@ -274,8 +283,8 @@ export default function DemoPage() {
     async (info: {
       businessName: string;
       industry: string;
-      services: string;
-      locations: string;
+      services: string[];
+      locations: string[];
       contactEmail: string;
     }) => {
       setPhase("generating");
@@ -291,12 +300,20 @@ export default function DemoPage() {
             businessContext: {
               businessName: info.businessName,
               industry: info.industry,
-              services: info.services.split(",").map((s) => s.trim()).filter(Boolean),
-              locations: info.locations.split(",").map((s) => s.trim()).filter(Boolean),
+              services: info.services,
+              locations: info.locations,
               phone: null,
               contactEmail: info.contactEmail,
               targetKeywords: [],
             },
+            aiAnalysis: aiAnalysis
+              ? {
+                  summary: aiAnalysis.summary,
+                  overallGrade: aiAnalysis.overallGrade,
+                  findings: aiAnalysis.findings,
+                  topPriorities: aiAnalysis.topPriorities,
+                }
+              : null,
           }),
         });
 
@@ -313,7 +330,7 @@ export default function DemoPage() {
         setPhase("error");
       }
     },
-    [auditId]
+    [auditId, aiAnalysis]
   );
 
   // ── Go live → checkout ──────────────────────────────────────────────
@@ -428,7 +445,26 @@ export default function DemoPage() {
         {/* Business info form */}
         {phase === "audit_done" && (
           <div ref={formRef} className="mb-8">
-            <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
+            <BusinessInfoForm
+              onSubmit={handleBusinessInfoSubmit}
+              initialEmail={contactEmail ?? undefined}
+              prefill={
+                aiAnalysis
+                  ? {
+                      businessName: aiAnalysis.detectedBusinessName,
+                      industry: aiAnalysis.detectedIndustry,
+                      services: aiAnalysis.detectedServices,
+                      locations: aiAnalysis.detectedLocations,
+                    }
+                  : undefined
+              }
+              disabled={
+                aiAnalysisStatus !== null &&
+                aiAnalysisStatus !== "complete" &&
+                aiAnalysisStatus !== "failed"
+              }
+              disabledReason="Waiting for deep analysis..."
+            />
           </div>
         )}
 

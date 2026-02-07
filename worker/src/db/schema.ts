@@ -100,6 +100,10 @@ export const auditResults = pgTable("audit_results", {
       recommendation: string;
     }[];
     topPriorities: string[];
+    detectedIndustry?: string;
+    detectedServices?: string[];
+    detectedLocations?: string[];
+    detectedBusinessName?: string;
   }>(),
   aiAnalysisStatus: text("ai_analysis_status").$type<
     "pending" | "analyzing" | "complete" | "failed"

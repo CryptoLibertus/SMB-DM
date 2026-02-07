@@ -24,6 +24,23 @@ const GenerateRequestSchema = z.object({
     contactEmail: z.email(),
     targetKeywords: z.array(z.string()),
   }),
+  aiAnalysis: z
+    .object({
+      summary: z.string(),
+      overallGrade: z.string(),
+      findings: z.array(
+        z.object({
+          category: z.string(),
+          severity: z.enum(["critical", "warning", "info"]),
+          title: z.string(),
+          detail: z.string(),
+          recommendation: z.string(),
+        })
+      ),
+      topPriorities: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
   demoSessionId: z.uuid().optional(),
 });
 
@@ -120,7 +137,10 @@ export async function POST(req: NextRequest) {
       screenshotMobile: auditResult.screenshotMobile,
     };
 
-    // 6. Trigger Fly.io worker (fire-and-forget)
+    // 6. Read AI analysis from request body or fall back to DB
+    const aiAnalysis = parsed.aiAnalysis ?? auditResult.aiAnalysis ?? null;
+
+    // 7. Trigger Fly.io worker (fire-and-forget)
     try {
       await triggerWorkerGeneration({
         generationId,
@@ -134,6 +154,7 @@ export async function POST(req: NextRequest) {
         ],
         businessContext: parsed.businessContext,
         auditData,
+        aiAnalysis,
       });
     } catch (workerErr) {
       console.error("Failed to trigger worker:", workerErr);

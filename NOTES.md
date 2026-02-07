@@ -131,3 +131,11 @@ Write follow up email
 take assets from original website to potentially use for new versions.
 
 Reduce to one generation after user selects what style of site.
+
+Please implement these changes, test, analyze, and review before completion. Be thorough.
+- Take visual assets from source website to use for new website. This preserves the assets that the owner already invested into creating. Only do this with images of products, services, people that are not stock images.
+
+- Reduce the site generations to just a single version. There is no need to generate 3 at once, we should make it present->review->Revision(prompts for checkout to complete their revision) to increase conversions.
+- Create an agent team for the marketing site to fully optimize as a chief revenue officer would do to increase compelling sales copy, increase conversions, and make signup faster, easier, and onboarding completion increase.
+
+- Increase the detail of the audit results to be more persuasive on what could be improved with the new site design. Remembering that the core value of this product is to increase the SEO potential of their site to gain more traffic. Also mention that the automatic content creation would be implemented once they sign up (value prop)

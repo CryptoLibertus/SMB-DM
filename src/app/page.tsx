@@ -70,8 +70,8 @@ const FEATURES = [
 const STEPS = [
   {
     number: "01",
-    title: "Enter your URL",
-    description: "See exactly what\u2019s costing you customers \u2014 we audit SEO, mobile experience, and conversion potential.",
+    title: "Enter your email",
+    description: "Drop your email to unlock a free website audit \u2014 takes 60 seconds.",
   },
   {
     number: "02",
@@ -105,13 +105,46 @@ const TRUST_SIGNALS = [
 ];
 
 export default function Home() {
+  const [email, setEmail] = useState("");
   const [url, setUrl] = useState("");
+  const [demoSessionId, setDemoSessionId] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
   const router = useRouter();
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || submitting) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/demo/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Invalid email address");
+        return;
+      }
+
+      setDemoSessionId(data.data.demoSessionId);
+      setStep(2);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim() || submitting) return;
 
@@ -122,7 +155,7 @@ export default function Home() {
       const res = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: url.trim(), demoSessionId }),
       });
 
       const data = await res.json();
@@ -181,38 +214,85 @@ export default function Home() {
           </h1>
 
           <p className="animate-float-up-delay-2 mx-auto mt-6 max-w-xl text-lg font-light leading-relaxed text-text-light sm:text-xl">
-            Enter your URL below for a free website audit. We&apos;ll show you
-            exactly what&apos;s wrong and build you something better.
+            {step === 1
+              ? "Enter your email to start your free website audit."
+              : "Now enter your website URL and we\u2019ll run the audit."}
           </p>
 
-          {/* URL Input — the centerpiece */}
-          <form
-            onSubmit={handleSubmit}
-            className="animate-float-up-delay-3 mx-auto mt-10 flex max-w-xl flex-col gap-3 sm:flex-row sm:gap-0"
-          >
-            <div className="animate-pulse-glow relative flex-1 rounded-xl sm:rounded-r-none">
-              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
-                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
-              </div>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="e.g., yourbusiness.com"
-                required
-                className="h-14 w-full rounded-xl border border-white/10 bg-surface-dark-secondary pl-12 pr-4 text-base font-medium text-white placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:h-16 sm:rounded-r-none sm:text-lg"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed sm:h-16 sm:rounded-l-none sm:text-lg"
+          {/* Step 1: Email Input */}
+          {step === 1 && (
+            <form
+              onSubmit={handleEmailSubmit}
+              className="animate-float-up-delay-3 mx-auto mt-10 flex max-w-xl flex-col gap-3 sm:flex-row sm:gap-0"
             >
-              {submitting ? "Starting audit..." : "Audit My Website Free"}
-            </button>
-          </form>
+              <div className="animate-pulse-glow relative flex-1 rounded-xl sm:rounded-r-none">
+                <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                </div>
+                <input
+                  id="hero-email-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@business.com"
+                  required
+                  className="h-14 w-full rounded-xl border border-white/10 bg-surface-dark-secondary pl-12 pr-4 text-base font-medium text-white placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:h-16 sm:rounded-r-none sm:text-lg"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed sm:h-16 sm:rounded-l-none sm:text-lg"
+              >
+                {submitting ? "Starting..." : "Get Started"}
+              </button>
+            </form>
+          )}
+
+          {/* Step 2: URL Input (with email badge) */}
+          {step === 2 && (
+            <div className="animate-float-up-delay-3 mx-auto mt-10 max-w-xl">
+              <div className="mb-3 flex items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm text-text-light">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-green-400" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  {email}
+                </span>
+              </div>
+              <form
+                onSubmit={handleUrlSubmit}
+                className="flex flex-col gap-3 sm:flex-row sm:gap-0"
+              >
+                <div className="animate-pulse-glow relative flex-1 rounded-xl sm:rounded-r-none">
+                  <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                    </svg>
+                  </div>
+                  <input
+                    id="hero-url-input"
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="e.g., yourbusiness.com"
+                    required
+                    autoFocus
+                    className="h-14 w-full rounded-xl border border-white/10 bg-surface-dark-secondary pl-12 pr-4 text-base font-medium text-white placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:h-16 sm:rounded-r-none sm:text-lg"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed sm:h-16 sm:rounded-l-none sm:text-lg"
+                >
+                  {submitting ? "Starting audit..." : "Audit My Website Free"}
+                </button>
+              </form>
+            </div>
+          )}
 
           {error && (
             <p className="mt-3 text-sm text-red-400">{error}</p>
@@ -389,9 +469,11 @@ export default function Home() {
 
             <button
               onClick={() => {
-                const hero = document.querySelector("input[type=url]");
-                if (hero) (hero as HTMLInputElement).focus();
                 window.scrollTo({ top: 0, behavior: "smooth" });
+                setTimeout(() => {
+                  const input = document.getElementById(step === 1 ? "hero-email-input" : "hero-url-input");
+                  if (input) (input as HTMLInputElement).focus();
+                }, 400);
               }}
               className="w-full rounded-xl bg-accent py-4 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
             >
@@ -459,9 +541,11 @@ export default function Home() {
             </p>
             <button
               onClick={() => {
-                const hero = document.querySelector("input[type=url]");
-                if (hero) (hero as HTMLInputElement).focus();
                 window.scrollTo({ top: 0, behavior: "smooth" });
+                setTimeout(() => {
+                  const input = document.getElementById(step === 1 ? "hero-email-input" : "hero-url-input");
+                  if (input) (input as HTMLInputElement).focus();
+                }, 400);
               }}
               className="rounded-xl bg-accent px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
             >

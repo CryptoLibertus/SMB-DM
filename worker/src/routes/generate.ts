@@ -37,6 +37,23 @@ const generateRequestSchema = z.object({
     contactEmail: z.string().email(),
     targetKeywords: z.array(z.string()),
   }),
+  aiAnalysis: z
+    .object({
+      summary: z.string(),
+      overallGrade: z.string(),
+      findings: z.array(
+        z.object({
+          category: z.string(),
+          severity: z.enum(["critical", "warning", "info"]),
+          title: z.string(),
+          detail: z.string(),
+          recommendation: z.string(),
+        })
+      ),
+      topPriorities: z.array(z.string()),
+    })
+    .nullable()
+    .optional(),
   auditData: z
     .object({
       seoScore: z.number(),

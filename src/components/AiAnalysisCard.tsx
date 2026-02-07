@@ -17,13 +17,10 @@ interface AiAnalysis {
   topPriorities: string[];
 }
 
-const SEVERITY_STYLES: Record<
-  Finding["severity"],
-  { bg: string; text: string; label: string }
-> = {
-  critical: { bg: "bg-red-100", text: "text-red-800", label: "Critical" },
-  warning: { bg: "bg-yellow-100", text: "text-yellow-800", label: "Warning" },
-  info: { bg: "bg-blue-100", text: "text-blue-800", label: "Info" },
+const SEVERITY_DOT: Record<Finding["severity"], string> = {
+  critical: "bg-red-500",
+  warning: "bg-yellow-500",
+  info: "bg-blue-400",
 };
 
 const GRADE_COLORS: Record<string, string> = {
@@ -55,6 +52,9 @@ export default function AiAnalysisCard({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     () => new Set(CATEGORIES)
   );
+  const [expandedFindings, setExpandedFindings] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
@@ -63,6 +63,18 @@ export default function AiAnalysisCard({
         next.delete(category);
       } else {
         next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const toggleFinding = (key: string) => {
+    setExpandedFindings((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
       }
       return next;
     });
@@ -84,85 +96,56 @@ export default function AiAnalysisCard({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-      {/* Header with grade */}
-      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            AI Deep Analysis
-          </h3>
-          <p className="mt-0.5 text-sm text-gray-500">
-            CRO expert assessment of your website
-          </p>
-        </div>
+      {/* Header row: title + grade badge */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <h3 className="text-lg font-semibold text-gray-900">AI Analysis</h3>
         <div
-          className={`flex h-14 w-14 items-center justify-center rounded-full ${getGradeColor(analysis.overallGrade)} text-xl font-bold text-white`}
+          className={`flex h-12 w-12 items-center justify-center rounded-full ${getGradeColor(analysis.overallGrade)} text-lg font-bold text-white`}
         >
           {analysis.overallGrade}
         </div>
       </div>
 
-      {/* Executive summary */}
-      <div className="border-b border-gray-100 px-6 py-4">
-        <p className="text-sm leading-relaxed text-gray-700">
-          {analysis.summary}
-        </p>
+      {/* Summary — short text */}
+      <div className="border-t border-gray-100 px-6 py-3">
+        <p className="text-sm text-gray-600">{analysis.summary}</p>
       </div>
 
-      {/* Top priorities */}
-      <div className="border-b border-gray-100 px-6 py-4">
+      {/* Top Priorities — hero content */}
+      <div className="border-t border-gray-100 px-6 py-4">
         <h4 className="mb-2 text-sm font-semibold text-gray-900">
           Top Priorities
         </h4>
-        <ol className="space-y-1.5">
+        <ol className="space-y-1">
           {analysis.topPriorities.map((priority, i) => (
-            <li key={i} className="flex gap-2 text-sm text-gray-700">
+            <li key={i} className="flex gap-2 text-sm">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
                 {i + 1}
               </span>
-              <span className="font-medium">{priority}</span>
+              <span className="font-medium text-gray-800">{priority}</span>
             </li>
           ))}
         </ol>
       </div>
 
-      {/* Findings by category */}
-      <div className="divide-y divide-gray-100">
+      {/* Findings by category — collapsible, bullet-only */}
+      <div className="border-t border-gray-100">
         {CATEGORIES.map((category) => {
           const findings = findingsByCategory.get(category) || [];
           if (findings.length === 0) return null;
 
           const isExpanded = expandedCategories.has(category);
-          const criticalCount = findings.filter(
-            (f) => f.severity === "critical"
-          ).length;
-          const warningCount = findings.filter(
-            (f) => f.severity === "warning"
-          ).length;
 
           return (
-            <div key={category}>
+            <div key={category} className="border-b border-gray-50 last:border-b-0">
               <button
                 onClick={() => toggleCategory(category)}
-                className="flex w-full items-center justify-between px-6 py-3 text-left hover:bg-gray-50"
+                className="flex w-full items-center justify-between px-6 py-2.5 text-left hover:bg-gray-50"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-900">
-                    {category}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    ({findings.length})
-                  </span>
-                  {criticalCount > 0 && (
-                    <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
-                      {criticalCount} critical
-                    </span>
-                  )}
-                  {warningCount > 0 && (
-                    <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
-                      {warningCount} warning
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {category}{" "}
+                  <span className="text-gray-400">({findings.length})</span>
+                </span>
                 <svg
                   className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   fill="none"
@@ -170,46 +153,45 @@ export default function AiAnalysisCard({
                   stroke="currentColor"
                   strokeWidth={2}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 9l-7 7-7-7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               {isExpanded && (
-                <div className="space-y-3 px-6 pb-4">
+                <ul className="px-6 pb-3 pt-0.5">
                   {findings.map((finding, i) => {
-                    const severity = SEVERITY_STYLES[finding.severity];
+                    const findingKey = `${category}-${i}`;
+                    const isDetailExpanded = expandedFindings.has(findingKey);
+
                     return (
-                      <div
-                        key={i}
-                        className="rounded-lg border border-gray-100 bg-gray-50 p-4"
-                      >
-                        <div className="mb-1.5 flex items-center gap-2">
+                      <li key={i} className="py-0.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleFinding(findingKey)}
+                          className="flex w-full items-start gap-2 text-left"
+                        >
                           <span
-                            className={`rounded px-1.5 py-0.5 text-xs font-medium ${severity.bg} ${severity.text}`}
-                          >
-                            {severity.label}
-                          </span>
-                          <span className="text-sm font-semibold text-gray-900">
+                            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[finding.severity]}`}
+                          />
+                          <span className="text-sm font-medium text-gray-800">
                             {finding.title}
                           </span>
-                        </div>
-                        <p className="mb-2 text-sm leading-relaxed text-gray-600">
-                          {finding.detail}
-                        </p>
-                        <div className="rounded border-l-2 border-blue-300 bg-blue-50 py-1.5 pl-3 pr-2">
-                          <p className="text-sm text-blue-800">
-                            <span className="font-medium">Recommendation:</span>{" "}
-                            {finding.recommendation}
-                          </p>
-                        </div>
-                      </div>
+                        </button>
+                        {isDetailExpanded && (
+                          <div className="ml-4 mt-1 mb-2 rounded border-l-2 border-gray-200 pl-3">
+                            <p className="text-xs leading-relaxed text-gray-600">
+                              {finding.detail}
+                            </p>
+                            <p className="mt-1 text-xs text-blue-700">
+                              <span className="font-medium">Fix:</span>{" "}
+                              {finding.recommendation}
+                            </p>
+                          </div>
+                        )}
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               )}
             </div>
           );

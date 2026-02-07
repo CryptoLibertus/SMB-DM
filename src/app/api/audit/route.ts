@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
-import { auditResults } from "@/db/schema";
+import { auditResults, demoSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { success, error } from "@/types";
 import { runAuditPipeline } from "@/features/audit";
@@ -11,6 +11,7 @@ export const maxDuration = 60;
 const auditRequestSchema = z.object({
   url: z.url(),
   tenantId: z.uuid().optional(),
+  demoSessionId: z.uuid().optional(),
 });
 
 function normalizeUrl(raw: string): string {
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { url, tenantId } = parsed.data;
+    const { url, tenantId, demoSessionId } = parsed.data;
 
     // Resume only in-progress audits (completedStage < 4).
     // Completed audits are ignored so the user always gets a fresh run.
@@ -51,6 +52,13 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existing && (existing.completedStage ?? 0) < 4) {
+      // Link demoSession to resumed audit
+      if (demoSessionId) {
+        await db
+          .update(demoSessions)
+          .set({ auditResultId: existing.id })
+          .where(eq(demoSessions.id, demoSessionId));
+      }
       return NextResponse.json(
         success({ auditId: existing.id, resumed: true })
       );
@@ -64,6 +72,14 @@ export async function POST(req: NextRequest) {
         tenantId: tenantId ?? null,
       })
       .returning({ id: auditResults.id });
+
+    // Link demoSession to this auditResult
+    if (demoSessionId) {
+      await db
+        .update(demoSessions)
+        .set({ auditResultId: auditResult.id })
+        .where(eq(demoSessions.id, demoSessionId));
+    }
 
     // Run pipeline after response is sent — `after()` keeps the serverless
     // function alive so the work actually completes on Vercel.

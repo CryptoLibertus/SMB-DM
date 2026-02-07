@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auditResults, sites, siteVersions } from "@/db/schema";
+import { auditResults, demoSessions, sites, siteVersions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { success, error } from "@/types";
 
@@ -87,12 +87,20 @@ export async function GET(
     }
   }
 
+  // Look up linked demoSession for contactEmail
+  const [demoSession] = await db
+    .select({ contactEmail: demoSessions.contactEmail })
+    .from(demoSessions)
+    .where(eq(demoSessions.auditResultId, id))
+    .limit(1);
+
   return NextResponse.json(
     success({
       stage,
       stageNumber,
       totalStages: 4,
       isComplete,
+      contactEmail: demoSession?.contactEmail ?? null,
       auditResult: {
         seoScore: row.seoScore,
         mobileScore: row.mobileScore,

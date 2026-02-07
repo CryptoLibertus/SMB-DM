@@ -37,6 +37,30 @@ export const storeAnalysisTool = tool(
     topPriorities: z
       .array(z.string())
       .describe("Top 3 action items, ordered by impact"),
+    detectedIndustry: z
+      .string()
+      .optional()
+      .describe(
+        "The business's industry category (e.g. 'Plumbing & HVAC', 'Dental', 'Legal')"
+      ),
+    detectedServices: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Services offered by the business, extracted from site content"
+      ),
+    detectedLocations: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Locations or service areas mentioned on the site"
+      ),
+    detectedBusinessName: z
+      .string()
+      .optional()
+      .describe(
+        "The business name as it appears on the site"
+      ),
   },
   async (args) => {
     try {
@@ -48,6 +72,10 @@ export const storeAnalysisTool = tool(
             overallGrade: args.overallGrade,
             findings: args.findings,
             topPriorities: args.topPriorities,
+            detectedIndustry: args.detectedIndustry,
+            detectedServices: args.detectedServices,
+            detectedLocations: args.detectedLocations,
+            detectedBusinessName: args.detectedBusinessName,
           },
           aiAnalysisStatus: "complete",
         })

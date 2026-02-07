@@ -17,7 +17,8 @@ async function generateVersion(
   versionNumber: number,
   directive: DesignDirective,
   businessContext: BusinessContext,
-  auditData: AuditPipelineResult | null
+  auditData: AuditPipelineResult | null,
+  aiAnalysis?: GenerateRequest["aiAnalysis"]
 ): Promise<{ status: "ready" | "failed"; error?: string }> {
   const workspacePath = `/tmp/gen-${siteId}/v${versionNumber}`;
   await fs.mkdir(workspacePath, { recursive: true });
@@ -29,7 +30,8 @@ async function generateVersion(
     auditData,
     workspacePath,
     siteId,
-    siteVersionId
+    siteVersionId,
+    aiAnalysis
   );
 
   const workerTools = createWorkerToolServer();
@@ -130,7 +132,8 @@ export async function runGeneration(
       version.versionNumber,
       version.directive,
       req.businessContext,
-      req.auditData
+      req.auditData,
+      req.aiAnalysis
     );
 
     // If the agent failed, ensure DB reflects it
