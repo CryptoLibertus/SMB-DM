@@ -27,7 +27,34 @@ export async function createProject(name: string) {
     const body = await res.text().catch(() => "");
     throw new Error(`Failed to create project: ${res.status} ${body}`);
   }
-  return res.json();
+  const project = await res.json();
+
+  // Disable deployment protection so generated sites are publicly accessible
+  await disableDeploymentProtection(project.id);
+
+  return project;
+}
+
+/** Disable Vercel Deployment Protection on a project so previews are public */
+async function disableDeploymentProtection(projectId: string) {
+  const res = await fetch(
+    withTeamId(`${VERCEL_API_BASE}/v9/projects/${projectId}`),
+    {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        oidcTokenConfig: { enabled: false },
+        passwordProtection: null,
+        trustedIps: null,
+        ssoProtection: null,
+      }),
+    }
+  );
+  if (!res.ok) {
+    // Non-fatal — log but don't throw
+    const body = await res.text().catch(() => "");
+    console.error(`Failed to disable deployment protection for ${projectId}: ${res.status} ${body}`);
+  }
 }
 
 export async function getProject(projectId: string) {
