@@ -41,15 +41,16 @@ export async function POST(req: NextRequest) {
 
     const { url, tenantId } = parsed.data;
 
-    // Check for an existing audit for this URL
+    // Resume only in-progress audits (completedStage < 4).
+    // Completed audits are ignored so the user always gets a fresh run.
     const [existing] = await db
-      .select({ id: auditResults.id })
+      .select({ id: auditResults.id, completedStage: auditResults.completedStage })
       .from(auditResults)
       .where(eq(auditResults.targetUrl, url))
       .orderBy(desc(auditResults.createdAt))
       .limit(1);
 
-    if (existing) {
+    if (existing && (existing.completedStage ?? 0) < 4) {
       return NextResponse.json(
         success({ auditId: existing.id, resumed: true })
       );
