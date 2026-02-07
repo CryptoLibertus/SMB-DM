@@ -16,6 +16,24 @@ export const metadata: Metadata = {
   title: "SMB-DM | Website Refresh & Growth Platform",
   description:
     "AI-powered website redesigns, SEO content, and analytics for small businesses. $99.95/month.",
+  metadataBase: new URL("https://smb-dm.vercel.app"),
+  openGraph: {
+    title: "SMB-DM | Website Refresh & Growth Platform",
+    description:
+      "AI-powered website redesigns, SEO content, and analytics for small businesses. $99.95/month.",
+    url: "https://smb-dm.vercel.app",
+    type: "website",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SMB-DM | Website Refresh & Growth Platform",
+    description:
+      "AI-powered website redesigns, SEO content, and analytics for small businesses. $99.95/month.",
+  },
+  other: {
+    "theme-color": "#3B5BFE",
+  },
 };
 
 export default function RootLayout({

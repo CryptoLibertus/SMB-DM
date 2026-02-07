@@ -13,6 +13,7 @@ interface AuditResultCardProps {
     robots: string | null;
   };
   analyticsDetected?: { ga4: boolean; gtm: boolean; other: string[] };
+  onGenerateClick?: () => void;
 }
 
 function getSeverity(score: number): "red" | "yellow" | "green" {
@@ -48,9 +49,11 @@ function buildSeoInsight(
   if (score < 50 && issues.length === 0)
     issues.push("weak keyword optimization");
 
+  const prefix = score < 80 ? "60% of clicks go to the first 3 Google results. " : "";
+
   const diagnosis =
     issues.length > 0
-      ? `Found: ${issues.join(", ")}`
+      ? `${prefix}Found: ${issues.join(", ")}`
       : "Basic SEO structure in place";
 
   const fix =
@@ -62,11 +65,13 @@ function buildSeoInsight(
 }
 
 function buildMobileInsight(score: number) {
+  const prefix = score < 80 ? "Over half your visitors are on phones. " : "";
+
   const diagnosis =
     score < 50
-      ? "Your site isn't optimized for mobile visitors"
+      ? `${prefix}Your site isn't optimized for mobile visitors`
       : score < 80
-        ? "Some mobile experience issues detected"
+        ? `${prefix}Some mobile experience issues detected`
         : "Mobile experience looks solid";
 
   const fix =
@@ -81,11 +86,13 @@ function buildCtaInsight(ctaCount: number) {
   const severity: "red" | "yellow" | "green" =
     ctaCount === 0 ? "red" : ctaCount < 3 ? "yellow" : "green";
 
+  const prefix = ctaCount < 3 ? "Without clear next steps, visitors leave without taking action. " : "";
+
   const diagnosis =
     ctaCount === 0
-      ? "No clear calls-to-action found on your site"
+      ? `${prefix}No clear calls-to-action found on your site`
       : ctaCount < 3
-        ? `Only ${ctaCount} call-to-action found — visitors may not know what to do next`
+        ? `${prefix}Only ${ctaCount} call-to-action found — visitors may not know what to do next`
         : `${ctaCount} calls-to-action detected`;
 
   const fix =
@@ -104,10 +111,12 @@ function buildAnalyticsInsight(
     ? "green"
     : "red";
 
+  const prefix = !hasAnalytics ? "You can't improve what you can't measure. " : "";
+
   let diagnosis: string;
   if (!hasAnalytics) {
     diagnosis =
-      "No analytics tracking detected — you have no visibility into your traffic";
+      `${prefix}No analytics tracking detected — you have no visibility into your traffic`;
   } else {
     const tools: string[] = [];
     if (analyticsDetected?.ga4) tools.push("Google Analytics");
@@ -174,6 +183,7 @@ export default function AuditResultCard({
   targetUrl,
   metaTags,
   analyticsDetected,
+  onGenerateClick,
 }: AuditResultCardProps) {
   const seoInsight = buildSeoInsight(seoScore, metaTags);
   const mobileInsight = buildMobileInsight(mobileScore);
@@ -242,7 +252,19 @@ export default function AuditResultCard({
             </div>
           ))}
         </div>
+        <p className="mt-3 text-xs text-gray-500">
+          Businesses that address these issues typically see significantly more inbound leads.
+        </p>
       </div>
+
+      {onGenerateClick && (
+        <button
+          onClick={onGenerateClick}
+          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          Fix These Issues &rarr; Generate My Website
+        </button>
+      )}
     </div>
   );
 }

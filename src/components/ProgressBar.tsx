@@ -8,16 +8,16 @@ interface Stage {
 interface ProgressBarProps {
   currentStage: number;
   stages: Stage[];
+  timeEstimate?: string;
 }
 
-export default function ProgressBar({ currentStage, stages }: ProgressBarProps) {
+export default function ProgressBar({ currentStage, stages, timeEstimate }: ProgressBarProps) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
         {stages.map((stage, index) => {
           const isCompleted = index < currentStage;
           const isActive = index === currentStage;
-          const isPending = index > currentStage;
 
           return (
             <div key={index} className="flex flex-1 flex-col items-center">
@@ -67,17 +67,25 @@ export default function ProgressBar({ currentStage, stages }: ProgressBarProps) 
                   {stage.label}
                 </p>
                 <p
-                  className={`mt-0.5 hidden text-xs sm:block ${
-                    isPending ? "text-gray-300" : "text-gray-500"
+                  className={`mt-0.5 text-xs ${
+                    isActive ? "text-gray-500" : isCompleted ? "text-gray-500" : "text-gray-300"
                   }`}
                 >
-                  {stage.description}
+                  <span className="sm:hidden">
+                    {stage.label}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {stage.description}
+                  </span>
                 </p>
               </div>
             </div>
           );
         })}
       </div>
+      {timeEstimate && (
+        <p className="mt-3 text-center text-xs text-gray-400">{timeEstimate}</p>
+      )}
     </div>
   );
 }

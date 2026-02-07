@@ -85,3 +85,20 @@ body {
   background-size: 48px 48px;
   animation: grid-fade 6s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-up,
+  .animate-float-up-delay-1,
+  .animate-float-up-delay-2,
+  .animate-float-up-delay-3,
+  .animate-float-up-delay-4 {
+    animation: none;
+  }
+  .animate-pulse-glow {
+    animation: none;
+  }
+  .grid-bg {
+    animation: none;
+    opacity: 0.05;
+  }
+}

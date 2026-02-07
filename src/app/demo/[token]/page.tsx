@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
 import FloatingCTA from "@/components/FloatingCTA";
@@ -46,10 +46,18 @@ type Phase = "auditing" | "audit_done" | "generating" | "version_ready" | "error
 
 const POLL_INTERVAL_MS = 2_000;
 
+const SUBSCRIPTION_INCLUDES = [
+  "Managed hosting & daily backups",
+  "2 SEO blog posts per week",
+  "Built-in analytics dashboard",
+  "Custom domain with free SSL",
+];
+
 export default function DemoPage() {
   const params = useParams();
   const router = useRouter();
   const auditId = params.token as string;
+  const formRef = useRef<HTMLDivElement>(null);
 
   // ── State ──────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>("auditing");
@@ -59,6 +67,11 @@ export default function DemoPage() {
   const [sitePreview, setSitePreview] = useState<SitePreview | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
+
+  // ── Scroll to business form ─────────────────────────────────────────────
+  const scrollToForm = useCallback(() => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   // ── Audit polling ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -295,13 +308,26 @@ export default function DemoPage() {
             >
               Try Again
             </button>
+            <p className="mt-3 text-xs text-gray-500">
+              Having trouble?{" "}
+              <a href="mailto:support@smb-dm.com" className="text-blue-600 underline hover:text-blue-700">
+                Email support@smb-dm.com
+              </a>
+            </p>
           </div>
         )}
 
         {/* Audit progress */}
         {phase === "auditing" && (
           <div className="mb-8">
-            <ProgressBar currentStage={auditStage} stages={AUDIT_STAGES} />
+            <ProgressBar
+              currentStage={auditStage}
+              stages={AUDIT_STAGES}
+              timeEstimate="This usually takes about 60 seconds..."
+            />
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Your data is analyzed securely and never shared.
+            </p>
           </div>
         )}
 
@@ -316,13 +342,14 @@ export default function DemoPage() {
               targetUrl={auditResult.targetUrl}
               metaTags={auditResult.metaTags}
               analyticsDetected={auditResult.analyticsDetected}
+              onGenerateClick={phase === "audit_done" ? scrollToForm : undefined}
             />
           </div>
         )}
 
         {/* Business info form */}
         {phase === "audit_done" && (
-          <div className="mb-8">
+          <div ref={formRef} className="mb-8">
             <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
           </div>
         )}
@@ -330,13 +357,23 @@ export default function DemoPage() {
         {/* Generation progress */}
         {phase === "generating" && (
           <div className="mb-8">
-            <ProgressBar currentStage={genStage} stages={GENERATION_STAGES} />
+            <ProgressBar
+              currentStage={genStage}
+              stages={GENERATION_STAGES}
+              timeEstimate="Building your custom site... usually 2-5 minutes."
+            />
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Feel free to keep this tab open while we work.
+            </p>
           </div>
         )}
 
         {/* Site preview */}
         {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
           <div className="mb-8">
+            <p className="mb-3 text-center text-sm text-gray-600">
+              Here&apos;s your new website. Preview it, then go live.
+            </p>
             <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
               <div className="flex flex-col items-center gap-3 bg-white px-4 py-8">
                 <a
@@ -354,6 +391,23 @@ export default function DemoPage() {
                   {sitePreview.previewUrl}
                 </span>
               </div>
+            </div>
+
+            {/* Subscription includes */}
+            <div className="mt-4 rounded-lg bg-gray-50 p-4">
+              <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                Your subscription includes
+              </h4>
+              <ul className="grid gap-1.5 sm:grid-cols-2">
+                {SUBSCRIPTION_INCLUDES.map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
+                    <svg className="h-3.5 w-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

@@ -33,11 +33,10 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h3 className="mb-1 text-lg font-semibold text-gray-900">
-        Tell us about your business
+        Customize Your New Website
       </h3>
       <p className="mb-4 text-sm text-gray-500">
-        We&apos;ll use this to generate a custom website tailored to your
-        business.
+        Takes about 30 seconds. We&apos;ll build a site matched to your brand.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -86,6 +85,9 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             placeholder="you@business.com"
           />
+          <p className="mt-1 text-xs text-gray-400">
+            We&apos;ll send your preview here. No spam, ever.
+          </p>
         </div>
 
         <div>
@@ -123,7 +125,7 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
           disabled={submitting}
           className="mt-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? "Starting generation..." : "Generate My Website"}
+          {submitting ? "Starting generation..." : "Generate My Website \u2192"}
         </button>
       </form>
     </div>
