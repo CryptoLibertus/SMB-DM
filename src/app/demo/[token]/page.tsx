@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
 import AiAnalysisCard from "@/components/AiAnalysisCard";
-import FloatingCTA from "@/components/FloatingCTA";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
-import Link from "next/link";
+import WizardShell from "@/components/WizardShell";
+import RotatingTips from "@/components/RotatingTips";
 import { useParams, useRouter } from "next/navigation";
 
 // ── Audit stages for ProgressBar ────────────────────────────────────────────
@@ -20,6 +20,22 @@ const AUDIT_STAGES = [
 const GENERATION_STAGES = [
   { label: "Preparing", description: "Setting up your new site" },
   { label: "Generating", description: "Building your custom website" },
+];
+
+const AUDIT_TIPS = [
+  "53% of mobile users leave slow sites within 3 seconds.",
+  "SEO drives 68% of all web traffic for small businesses.",
+  "Websites with clear CTAs convert 3x more visitors.",
+  "75% of consumers judge credibility by website design.",
+  "Local SEO helps 46% of all Google searches find nearby businesses.",
+];
+
+const GENERATION_TIPS = [
+  "Your site includes SEO-optimized meta tags and headings.",
+  "Building mobile-first responsive layouts for all devices.",
+  "Adding strategic calls-to-action to convert visitors into leads.",
+  "Optimizing page speed for better search rankings.",
+  "Creating professional, conversion-focused design sections.",
 ];
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -49,7 +65,7 @@ type ErrorSource = "audit" | "generation";
 
 const POLL_INTERVAL_MS = 2_000;
 const AI_POLL_INTERVAL_MS = 3_000;
-const MIN_AUDIT_DISPLAY_MS = 4_000; // show progress bar for at least 4s
+const MIN_AUDIT_DISPLAY_MS = 4_000;
 
 const SUBSCRIPTION_INCLUDES = [
   "Managed hosting & daily backups",
@@ -58,11 +74,37 @@ const SUBSCRIPTION_INCLUDES = [
   "Custom domain with free SSL",
 ];
 
+// ── Step config ─────────────────────────────────────────────────────────────
+const STEP_CONFIG: Record<number, { title: string; subtitle: string }> = {
+  1: {
+    title: "Analyzing Your Website",
+    subtitle: "We\u2019re crawling your site and running a full audit...",
+  },
+  2: {
+    title: "Your Audit Results",
+    subtitle: "Here\u2019s what we found. Review your scores, then customize your new site.",
+  },
+  3: {
+    title: "Tell Us About Your Business",
+    subtitle: "Takes about 30 seconds. We\u2019ll build a site matched to your brand.",
+  },
+  4: {
+    title: "Building Your New Website",
+    subtitle: "Creating a custom design tailored to your business...",
+  },
+  5: {
+    title: "Your New Website Is Ready",
+    subtitle: "Preview your new site and go live in minutes.",
+  },
+};
+
+const TOTAL_STEPS = 5;
+
 export default function DemoPage() {
   const params = useParams();
   const router = useRouter();
   const auditId = params.token as string;
-  const formRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // ── State ──────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>("auditing");
@@ -93,10 +135,36 @@ export default function DemoPage() {
   const [aiAnalysisStatus, setAiAnalysisStatus] = useState<string | null>(null);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
 
-  // ── Scroll to business form ─────────────────────────────────────────────
-  const scrollToForm = useCallback(() => {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+  // ── Wizard state ──────────────────────────────────────────────────────
+  const [wizardStep, setWizardStep] = useState(1);
+  const [direction, setDirection] = useState<1 | -1>(1);
+
+  // Sync wizard step from phase changes (auto-advancing steps)
+  useEffect(() => {
+    if (phase === "auditing" && wizardStep !== 1) {
+      setDirection(wizardStep > 1 ? -1 : 1);
+      setWizardStep(1);
+    } else if (phase === "audit_done" && wizardStep < 2) {
+      setDirection(1);
+      setWizardStep(2);
+    } else if (phase === "generating" && wizardStep !== 4) {
+      setDirection(1);
+      setWizardStep(4);
+    } else if (phase === "version_ready" && wizardStep !== 5) {
+      setDirection(1);
+      setWizardStep(5);
+    }
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Scroll step content to top on step change
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [wizardStep]);
+
+  const goToStep = (step: number) => {
+    setDirection(step > wizardStep ? 1 : -1);
+    setWizardStep(step);
+  };
 
   // ── Audit polling ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -146,7 +214,6 @@ export default function DemoPage() {
             });
           }
 
-          // Track AI analysis status
           if (data.aiAnalysisStatus) {
             setAiAnalysisStatus(data.aiAnalysisStatus);
           }
@@ -155,13 +222,9 @@ export default function DemoPage() {
           }
 
           if (data.isComplete) {
-            // Phase transition only on first time seeing isComplete
             if (!basicAuditDone) {
-              // Ensure the progress bar is visible for a minimum duration
-              // so fast audits don't look like nothing happened.
               const elapsed = Date.now() - mountedAt;
               if (elapsed < MIN_AUDIT_DISPLAY_MS) {
-                // Animate through remaining stages before transitioning
                 const remaining = MIN_AUDIT_DISPLAY_MS - elapsed;
                 const stageDelay = remaining / AUDIT_STAGES.length;
                 for (let i = 0; i <= AUDIT_STAGES.length && !cancelled; i++) {
@@ -196,10 +259,9 @@ export default function DemoPage() {
               basicAuditDone = true;
             }
 
-            // Continue polling for AI analysis if it hasn't completed yet
             const aiStatus = data.aiAnalysisStatus;
             if (aiStatus === "pending" || aiStatus === "analyzing") {
-              // Keep polling at slower interval for AI analysis
+              // Keep polling for AI analysis
             } else {
               return;
             }
@@ -349,54 +411,18 @@ export default function DemoPage() {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-background">
-      {/* ─── Dark header ─── */}
-      <section className="relative bg-surface-dark text-white">
-        <div className="grid-bg pointer-events-none absolute inset-0" />
-
-        <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            SMB<span className="text-accent">-DM</span>
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm font-medium text-text-light transition-colors hover:text-white"
-          >
-            Sign in
-          </Link>
-        </nav>
-
-        <div className="relative z-10 mx-auto max-w-3xl px-6 pb-12 pt-8 text-center sm:pb-16 sm:pt-12">
-          <h1 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-4xl">
-            {phase === "auditing" || phase === "audit_done"
-              ? "Analyzing Your Website"
-              : phase === "generating"
-                ? "Building Your New Website"
-                : phase === "version_ready"
-                  ? "Your New Website Is Ready"
-                  : "Website Refresh"}
-          </h1>
-          <p className="mt-3 text-base text-text-light">
-            {phase === "auditing"
-              ? "We\u2019re crawling your site and running a full audit..."
-              : phase === "audit_done"
-                ? "Audit complete! Tell us about your business to generate your new site."
-                : phase === "generating"
-                  ? "Creating a custom design tailored to your business..."
-                  : phase === "version_ready"
-                    ? "Preview your new site and go live in minutes."
-                    : ""}
-          </p>
-        </div>
-      </section>
-
-      {/* ─── Content ─── */}
-      <div className="mx-auto max-w-4xl px-4 py-8 pb-24">
-        {/* Error state */}
-        {phase === "error" && (
-          <div className="mb-8 rounded-xl border border-red-300/30 bg-red-50 p-6 text-center">
+  // ── Error overlay ─────────────────────────────────────────────────────
+  if (phase === "error") {
+    return (
+      <WizardShell
+        currentStep={wizardStep}
+        totalSteps={TOTAL_STEPS}
+        title="Something Went Wrong"
+        subtitle={errorMessage || "An unexpected error occurred."}
+        direction={direction}
+      >
+        <div className="flex flex-1 items-center justify-center px-6 py-12">
+          <div className="w-full max-w-md rounded-xl border border-red-300/30 bg-red-50 p-6 text-center">
             <p className="font-medium text-red-800">
               {errorMessage || "Something went wrong"}
             </p>
@@ -404,13 +430,11 @@ export default function DemoPage() {
               onClick={() => {
                 setErrorMessage(null);
                 if (errorSource === "generation") {
-                  // Go back to audit_done so user can re-submit
                   setGenerationId(null);
                   setSitePreview(null);
                   setGenStage(0);
                   setPhase("audit_done");
                 } else {
-                  // Re-poll audit — increment retryCount to re-trigger the effect
                   setAuditStage(0);
                   setRetryCount((c) => c + 1);
                   setPhase("auditing");
@@ -427,22 +451,45 @@ export default function DemoPage() {
               </a>
             </p>
           </div>
-        )}
+        </div>
+      </WizardShell>
+    );
+  }
 
-        {/* Audit progress */}
-        {phase === "auditing" && (
-          <div className="mb-8">
-            <ProgressBar
-              currentStage={auditStage}
-              stages={AUDIT_STAGES}
-              timeEstimate="This usually takes about 60 seconds..."
-            />
-            <p className="mt-2 text-center text-xs text-text-muted">
+  // ── Get step title/subtitle ────────────────────────────────────────────
+  const stepConfig = STEP_CONFIG[wizardStep] ?? STEP_CONFIG[1];
+
+  // ── Render ─────────────────────────────────────────────────────────────
+  return (
+    <WizardShell
+      currentStep={wizardStep}
+      totalSteps={TOTAL_STEPS}
+      title={stepConfig.title}
+      subtitle={stepConfig.subtitle}
+      direction={direction}
+    >
+      <div ref={scrollRef} className="flex flex-1 flex-col overflow-y-auto">
+        {/* ── Step 1: Analyzing ── */}
+        {wizardStep === 1 && (
+          <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-12">
+            <div className="w-full">
+              <ProgressBar
+                currentStage={auditStage}
+                stages={AUDIT_STAGES}
+                timeEstimate="This usually takes about 60 seconds..."
+              />
+            </div>
+
+            <div className="mt-8 w-full">
+              <RotatingTips tips={AUDIT_TIPS} />
+            </div>
+
+            <p className="mt-4 text-center text-xs text-text-muted">
               Your data is analyzed securely and never shared.
             </p>
 
-            {/* Skeleton preview of audit results */}
-            <div className="mt-8 animate-pulse rounded-xl border border-border-subtle bg-white p-6">
+            {/* Skeleton card */}
+            <div className="mt-8 w-full animate-pulse rounded-xl border border-border-subtle bg-white p-6">
               <div className="mb-4 h-5 w-40 rounded bg-border-subtle" />
               <div className="grid gap-4 sm:grid-cols-4">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -460,48 +507,76 @@ export default function DemoPage() {
           </div>
         )}
 
-        {/* Audit results */}
-        {auditResult && auditResult.seoScore > 0 && (
-          <div className="mb-8">
-            <AuditResultCard
-              seoScore={auditResult.seoScore}
-              mobileScore={auditResult.mobileScore}
-              ctaCount={auditResult.ctaCount}
-              hasAnalytics={auditResult.hasAnalytics}
-              targetUrl={auditResult.targetUrl}
-              metaTags={auditResult.metaTags}
-              analyticsDetected={auditResult.analyticsDetected}
-              onGenerateClick={phase === "audit_done" ? scrollToForm : undefined}
-            />
-          </div>
-        )}
+        {/* ── Step 2: Audit Results ── */}
+        {wizardStep === 2 && (
+          <div className="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6">
+            {auditResult && auditResult.seoScore > 0 && (
+              <div className="mb-6">
+                <AuditResultCard
+                  seoScore={auditResult.seoScore}
+                  mobileScore={auditResult.mobileScore}
+                  ctaCount={auditResult.ctaCount}
+                  hasAnalytics={auditResult.hasAnalytics}
+                  targetUrl={auditResult.targetUrl}
+                  metaTags={auditResult.metaTags}
+                  analyticsDetected={auditResult.analyticsDetected}
+                />
+              </div>
+            )}
 
-        {/* AI Analysis */}
-        {phase !== "auditing" && aiAnalysisStatus && !aiAnalysis && aiAnalysisStatus !== "failed" && (
-          <div className="mb-8 rounded-xl border border-border-subtle bg-white p-6">
-            <div className="flex items-center gap-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Running deep analysis...
-                </p>
-                <p className="text-xs text-text-muted">
-                  Our AI is reviewing your site content and CRO effectiveness
-                </p>
+            {/* AI Analysis loading */}
+            {aiAnalysisStatus && !aiAnalysis && aiAnalysisStatus !== "failed" && (
+              <div className="mb-6 rounded-xl border border-border-subtle bg-white p-6">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Running deep analysis...
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      Our AI is reviewing your site content and CRO effectiveness
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {aiAnalysis && (
+              <div className="mb-6">
+                <AiAnalysisCard analysis={aiAnalysis} />
+              </div>
+            )}
+
+            {/* Sticky bottom bar */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle bg-white/95 px-4 py-3 backdrop-blur-sm">
+              <div className="mx-auto flex max-w-4xl items-center justify-between">
+                <button
+                  onClick={() => goToStep(1)}
+                  className="text-sm text-text-muted transition-colors hover:text-foreground"
+                >
+                  &larr; Back
+                </button>
+                <button
+                  onClick={() => goToStep(3)}
+                  className="rounded-xl bg-accent px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
+                >
+                  Next: Customize Your Site &rarr;
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {aiAnalysis && (
-          <div className="mb-8">
-            <AiAnalysisCard analysis={aiAnalysis} />
-          </div>
-        )}
+        {/* ── Step 3: Business Info Form ── */}
+        {wizardStep === 3 && (
+          <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-4 py-8 sm:px-6">
+            <button
+              onClick={() => goToStep(2)}
+              className="mb-4 self-start text-sm text-text-muted transition-colors hover:text-foreground"
+            >
+              &larr; Back to Results
+            </button>
 
-        {/* Business info form */}
-        {phase === "audit_done" && (
-          <div ref={formRef} className="mb-8">
             <BusinessInfoForm
               onSubmit={handleBusinessInfoSubmit}
               initialEmail={contactEmail ?? undefined}
@@ -525,28 +600,31 @@ export default function DemoPage() {
           </div>
         )}
 
-        {/* Generation progress */}
-        {phase === "generating" && (
-          <div className="mb-8">
-            <ProgressBar
-              currentStage={genStage}
-              stages={GENERATION_STAGES}
-              timeEstimate="Building your custom site... usually 2-5 minutes."
-            />
-            <p className="mt-2 text-center text-xs text-text-muted">
+        {/* ── Step 4: Generating ── */}
+        {wizardStep === 4 && (
+          <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-12">
+            <div className="w-full">
+              <ProgressBar
+                currentStage={genStage}
+                stages={GENERATION_STAGES}
+                timeEstimate="Building your custom site... usually 2\u20135 minutes."
+              />
+            </div>
+
+            <div className="mt-8 w-full">
+              <RotatingTips tips={GENERATION_TIPS} intervalMs={5000} />
+            </div>
+
+            <p className="mt-4 text-center text-xs text-text-muted">
               Feel free to keep this tab open while we work.
             </p>
           </div>
         )}
 
-        {/* Site preview */}
-        {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
-          <div className="mb-8">
-            <p className="mb-3 text-center text-sm text-text-muted">
-              Here&apos;s your new website. Preview it, then go live.
-            </p>
-
-            {/* Inline iframe preview */}
+        {/* ── Step 5: Preview + Go Live ── */}
+        {wizardStep === 5 && sitePreview && sitePreview.status === "ready" && (
+          <div className="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6">
+            {/* Iframe preview */}
             <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
               {/* Browser chrome bar */}
               <div className="flex items-center gap-2 border-b border-border-subtle bg-gray-50 px-4 py-2.5">
@@ -555,7 +633,7 @@ export default function DemoPage() {
                   <span className="h-3 w-3 rounded-full bg-yellow-400" />
                   <span className="h-3 w-3 rounded-full bg-green-400" />
                 </div>
-                <div className="mx-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-text-muted border border-border-subtle">
+                <div className="mx-2 flex-1 truncate rounded-md border border-border-subtle bg-white px-3 py-1 text-xs text-text-muted">
                   {sitePreview.previewUrl}
                 </div>
                 <a
@@ -572,7 +650,7 @@ export default function DemoPage() {
               </div>
 
               {/* iframe */}
-              <div className="relative w-full" style={{ height: "70vh", minHeight: "480px" }}>
+              <div className="relative w-full" style={{ height: "60vh", minHeight: "400px" }}>
                 <iframe
                   src={sitePreview.previewUrl}
                   title="Site preview"
@@ -588,7 +666,7 @@ export default function DemoPage() {
                 href={sitePreview.previewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-accent border border-border-subtle shadow-sm transition-all hover:shadow-md"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -613,17 +691,24 @@ export default function DemoPage() {
                 ))}
               </ul>
             </div>
+
+            {/* Sticky bottom CTA */}
+            <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle bg-white/95 px-4 py-3 backdrop-blur-sm">
+              <div className="mx-auto flex max-w-4xl items-center justify-center gap-4">
+                <span className="hidden text-sm text-text-muted sm:inline">
+                  $99.95/mo &middot; Cancel anytime
+                </span>
+                <button
+                  onClick={handleGoLive}
+                  className="rounded-xl bg-accent px-8 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
+                >
+                  Go Live Now &mdash; $99.95/mo
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Floating CTA */}
-      {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
-        <FloatingCTA
-          onClick={handleGoLive}
-          disabled={false}
-        />
-      )}
-    </div>
+    </WizardShell>
   );
 }
