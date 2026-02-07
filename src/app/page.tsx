@@ -104,6 +104,30 @@ const TRUST_SIGNALS = [
   "Cancel anytime",
 ];
 
+const TESTIMONIALS = [
+  {
+    quote: "We went from a dated WordPress site to a modern, conversion-optimized page in under 10 minutes. Our form submissions doubled in the first month.",
+    name: "Sarah Chen",
+    role: "Owner",
+    business: "Bright Path Dental",
+    industry: "Healthcare",
+  },
+  {
+    quote: "The AI audit found issues our old agency missed for years. The blog content alone has boosted our organic traffic by 40%.",
+    name: "Marcus Rivera",
+    role: "Founder",
+    business: "Rivera Roofing Co.",
+    industry: "Home Services",
+  },
+  {
+    quote: "For $99/month I get a professional site, weekly blog posts, and analytics. My last agency charged $2K/month for less.",
+    name: "Jenny Park",
+    role: "Managing Partner",
+    business: "Park & Associates Law",
+    industry: "Legal",
+  },
+];
+
 export default function Home() {
   const [email, setEmail] = useState("");
   const [url, setUrl] = useState("");
@@ -146,7 +170,11 @@ export default function Home() {
 
   const handleUrlSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim() || submitting) return;
+    const raw = url.trim();
+    if (!raw || submitting) return;
+
+    // Auto-prepend https:// if no protocol
+    const normalizedUrl = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
 
     setSubmitting(true);
     setError(null);
@@ -155,7 +183,7 @@ export default function Home() {
       const res = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), demoSessionId }),
+        body: JSON.stringify({ url: normalizedUrl, demoSessionId }),
       });
 
       const data = await res.json();
@@ -255,12 +283,20 @@ export default function Home() {
           {step === 2 && (
             <div className="animate-float-up-delay-3 mx-auto mt-10 max-w-xl">
               <div className="mb-3 flex items-center justify-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm text-text-light">
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(null); }}
+                  className="group inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm text-text-light transition-colors hover:bg-white/15"
+                  title="Change email"
+                >
                   <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-green-400" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                   {email}
-                </span>
+                  <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 text-text-muted transition-colors group-hover:text-white" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
               </div>
               <form
                 onSubmit={handleUrlSubmit}
@@ -274,10 +310,10 @@ export default function Home() {
                   </div>
                   <input
                     id="hero-url-input"
-                    type="url"
+                    type="text"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    placeholder="e.g., yourbusiness.com"
+                    placeholder="yourbusiness.com"
                     required
                     autoFocus
                     className="h-14 w-full rounded-xl border border-white/10 bg-surface-dark-secondary pl-12 pr-4 text-base font-medium text-white placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:h-16 sm:rounded-r-none sm:text-lg"
@@ -316,7 +352,7 @@ export default function Home() {
       </section>
 
       {/* ─── TRUST SIGNALS BAR ─── */}
-      <section className="border-b border-border-subtle bg-white py-8">
+      <section className="border-b border-border-subtle bg-white py-6">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6">
           {TRUST_SIGNALS.map((signal) => (
             <div key={signal} className="flex items-center gap-2">
@@ -338,6 +374,52 @@ export default function Home() {
               </span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="border-b border-border-subtle bg-background py-20">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="mb-12 text-center">
+            <p className="mb-3 text-sm font-semibold tracking-wide text-accent uppercase">
+              Real results
+            </p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              Trusted by small businesses
+            </h2>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3">
+            {TESTIMONIALS.map((t) => (
+              <div
+                key={t.name}
+                className="flex flex-col rounded-xl border border-border-subtle bg-white p-6"
+              >
+                {/* Stars */}
+                <div className="mb-3 flex gap-0.5 text-yellow-400">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+
+                <p className="mb-4 flex-1 text-sm leading-relaxed text-foreground">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+
+                <div className="border-t border-border-subtle pt-4">
+                  <p className="text-sm font-semibold text-foreground">{t.name}</p>
+                  <p className="text-xs text-text-muted">
+                    {t.role}, {t.business}
+                  </p>
+                  <span className="mt-1 inline-block rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                    {t.industry}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

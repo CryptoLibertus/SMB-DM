@@ -1,138 +1,38 @@
 import Link from "next/link";
 
-const MOCK_CHANGES = [
-  {
-    id: "1",
-    description: "Update phone number on contact page",
-    requestType: "contact_update",
-    status: "deployed",
-    createdAt: "2026-01-20T14:30:00Z",
-  },
-  {
-    id: "2",
-    description: "Replace hero image with new team photo",
-    requestType: "image_swap",
-    status: "approved",
-    createdAt: "2026-01-28T10:15:00Z",
-  },
-  {
-    id: "3",
-    description: "Add new 'Emergency Services' page for 24/7 calls",
-    requestType: "new_page",
-    status: "preview_ready",
-    createdAt: "2026-02-01T09:00:00Z",
-  },
-  {
-    id: "4",
-    description: "Fix typo in Services section - 'plubming' to 'plumbing'",
-    requestType: "copy_edit",
-    status: "processing",
-    createdAt: "2026-02-04T16:45:00Z",
-  },
-  {
-    id: "5",
-    description: "Update business hours for spring season",
-    requestType: "copy_edit",
-    status: "received",
-    createdAt: "2026-02-06T08:00:00Z",
-  },
-];
-
-const statusColors: Record<string, string> = {
-  received: "bg-gray-50 text-gray-700",
-  processing: "bg-yellow-50 text-yellow-700",
-  preview_ready: "bg-blue-50 text-blue-700",
-  approved: "bg-indigo-50 text-indigo-700",
-  deployed: "bg-green-50 text-green-700",
-  rejected: "bg-red-50 text-red-700",
-  verification_hold: "bg-orange-50 text-orange-700",
-};
-
-const typeLabels: Record<string, string> = {
-  copy_edit: "Copy Edit",
-  image_swap: "Image Swap",
-  new_page: "New Page",
-  contact_update: "Contact Update",
-  other: "Other",
-};
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export default function ChangesPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Change Requests</h1>
+        <h1 className="text-2xl font-bold text-foreground">Change Requests</h1>
         <Link
           href="/dashboard/changes/new"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
         >
           Request Change
         </Link>
       </div>
 
-      <p className="mb-4 text-sm text-gray-500">
-        3 of 5 requests used this month
+      <p className="mb-4 text-sm text-text-muted">
+        0 of 5 requests used this month
       </p>
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-6 py-3 font-medium text-gray-500">Description</th>
-              <th className="hidden px-6 py-3 font-medium text-gray-500 sm:table-cell">
-                Type
-              </th>
-              <th className="hidden px-6 py-3 font-medium text-gray-500 md:table-cell">
-                Status
-              </th>
-              <th className="hidden px-6 py-3 font-medium text-gray-500 lg:table-cell">
-                Created
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {MOCK_CHANGES.map((change) => (
-              <tr
-                key={change.id}
-                className="border-b border-gray-100 last:border-0"
-              >
-                <td className="px-6 py-4">
-                  <p className="font-medium text-gray-900">{change.description}</p>
-                  <div className="mt-1 flex gap-2 sm:hidden">
-                    <span className="text-xs text-gray-500">
-                      {typeLabels[change.requestType]}
-                    </span>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[change.status]}`}
-                    >
-                      {change.status.replace("_", " ")}
-                    </span>
-                  </div>
-                </td>
-                <td className="hidden px-6 py-4 text-gray-500 sm:table-cell">
-                  {typeLabels[change.requestType]}
-                </td>
-                <td className="hidden px-6 py-4 md:table-cell">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[change.status]}`}
-                  >
-                    {change.status.replace("_", " ")}
-                  </span>
-                </td>
-                <td className="hidden px-6 py-4 text-gray-500 lg:table-cell">
-                  {formatDate(change.createdAt)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="rounded-lg border border-border-subtle bg-white p-8 shadow-sm">
+        <div className="flex flex-col items-center text-center">
+          <svg className="h-12 w-12 text-text-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+          </svg>
+          <h2 className="mt-4 text-lg font-semibold text-foreground">No change requests yet</h2>
+          <p className="mt-2 max-w-md text-sm text-text-muted">
+            Need to update your phone number, swap an image, or add a new page? Submit a change request and we&apos;ll handle it. You get 5 requests per month included in your plan.
+          </p>
+          <Link
+            href="/dashboard/changes/new"
+            className="mt-6 inline-flex rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+          >
+            Submit Your First Request
+          </Link>
+        </div>
       </div>
     </div>
   );

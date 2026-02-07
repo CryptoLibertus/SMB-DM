@@ -1,3 +1,7 @@
+// IMPORTANT: This is a subset of src/db/schema.ts (the source of truth).
+// When updating the main schema, sync changes to the tables below.
+// Foreign key references to tables not in this subset are omitted.
+
 import {
   pgTable,
   uuid,
@@ -126,6 +130,8 @@ export const siteVersions = pgTable("site_versions", {
     layoutType: string;
     typography: string;
   }>(),
+  progressStage: text("progress_stage"),
+  progressMessage: text("progress_message"),
   status: siteVersionStatusEnum("status").notNull().default("generating"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

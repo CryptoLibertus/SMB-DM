@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { db } from "@/lib/db";
-import { subscriptions, sites, tenants } from "@/db/schema";
+import { subscriptions, sites, tenants, processedWebhookEvents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { deploySiteVersion } from "@/features/generation/deploy";
 import { sendWelcomeEmail } from "./onboarding-emails";
@@ -8,11 +8,25 @@ import {
   sendPaymentFailedEmail,
   sendCancellationEmail,
 } from "./lifecycle-emails";
+import { stripe } from "@/lib/stripe";
 
 /**
  * Dispatch a Stripe webhook event to the appropriate handler.
+ * Checks idempotency to prevent duplicate processing on retries.
  */
 export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
+  // Idempotency check: skip if already processed
+  const [existing] = await db
+    .select({ id: processedWebhookEvents.id })
+    .from(processedWebhookEvents)
+    .where(eq(processedWebhookEvents.id, event.id))
+    .limit(1);
+
+  if (existing) {
+    console.log(`Skipping already-processed Stripe event: ${event.id} (${event.type})`);
+    return;
+  }
+
   switch (event.type) {
     case "checkout.session.completed":
       await handleCheckoutCompleted(
@@ -35,7 +49,14 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<void> {
     default:
       // Unhandled event type — log and ignore
       console.log(`Unhandled Stripe event type: ${event.type}`);
+      return; // Don't record unhandled events
   }
+
+  // Mark event as processed for idempotency
+  await db
+    .insert(processedWebhookEvents)
+    .values({ id: event.id, eventType: event.type })
+    .onConflictDoNothing();
 }
 
 /**
@@ -67,13 +88,19 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // Fetch subscription from Stripe to get the actual billing period
+  const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const anchorDate = new Date(sub.billing_cycle_anchor * 1000);
+  const periodEnd = new Date(anchorDate);
+  periodEnd.setMonth(periodEnd.getMonth() + 1);
+
   // Create Subscription record
   await db.insert(subscriptions).values({
     tenantId,
     stripeCustomerId,
     stripeSubscriptionId,
     status: "active",
-    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // ~30 days from now
+    currentPeriodEnd: periodEnd,
   });
 
   // Trigger site deployment for the selected version

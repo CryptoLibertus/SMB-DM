@@ -59,7 +59,7 @@ You must apply these principles to produce a professional, distinctive design:
 - Services section: 3-4 cards with icon/illustration, title, short description
 - Social proof: testimonials with name and role, or trust badges/logos
 - Contact section: phone (tel: link), email (mailto: link), address, optional form
-- Footer: business name, nav links, phone, email, copyright
+- Footer: business name, nav links, phone, email, copyright, and a "Powered by SMB-DM" attribution link
 - Use hover/focus states on all interactive elements
 - Use subtle transitions (150-200ms) for hover effects
 
@@ -99,5 +99,6 @@ Follow this exact workflow:
 - Use extracted client images where provided. For any additional visuals, use Unsplash or Pexels URLs.
 - DO NOT use any npm packages not listed in your package.json
 - DO NOT create node_modules or .next directories
-- Write complete file contents — no "..." or "// rest of code here" shortcuts`;
+- Write complete file contents — no "..." or "// rest of code here" shortcuts
+- ALWAYS include a small "Powered by SMB-DM" link in the site footer. It should be subtle (small text, muted color) and link to https://smb-dm.com. Example: \`<a href="https://smb-dm.com" target="_blank" rel="noopener noreferrer" class="text-xs text-gray-400 hover:text-gray-300">Powered by SMB-DM</a>\``;
 }

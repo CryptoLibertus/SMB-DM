@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface FloatingCTAProps {
   onClick: () => void;
   disabled?: boolean;
-  onDismiss?: () => void;
 }
+
+const REAPPEAR_DELAY_MS = 10_000;
 
 export default function FloatingCTA({
   onClick,
   disabled = false,
-  onDismiss,
 }: FloatingCTAProps) {
   const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!dismissed) return;
+
+    const timer = setTimeout(() => {
+      setDismissed(false);
+    }, REAPPEAR_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [dismissed]);
 
   if (dismissed) return null;
 
@@ -32,10 +42,7 @@ export default function FloatingCTA({
         </button>
       </div>
       <button
-        onClick={() => {
-          setDismissed(true);
-          onDismiss?.();
-        }}
+        onClick={() => setDismissed(true)}
         className="absolute right-3 top-2 p-1 text-text-muted hover:text-foreground"
         aria-label="Dismiss"
       >

@@ -16,6 +16,7 @@ export async function uploadSiteFiles(
   const blob = await put(blobPath, payload, {
     access: "public",
     contentType: "application/json",
+    addRandomSuffix: true,
   });
 
   return {

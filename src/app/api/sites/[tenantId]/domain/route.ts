@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { success, error } from "@/types";
 import { attachDomainToSite, verifyDnsPropagation } from "@/features/billing/dns";
 import { handleApiError } from "@/lib/errors";
+import { requireTenantAuth } from "@/lib/auth";
 
 const domainSchema = z.object({
   domain: z.string().min(1),
@@ -15,6 +16,10 @@ export async function POST(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
+
     const body = await req.json();
     const parsed = domainSchema.parse(body);
 

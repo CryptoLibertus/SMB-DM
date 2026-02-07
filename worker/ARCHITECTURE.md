@@ -388,8 +388,8 @@ export const updateProgressTool = tool(
     await db
       .update(siteVersions)
       .set({
-        // We store progress in the designMeta JSONB field as a sub-key
-        // OR we add a progress_stage column. For now, use console + DB status.
+        progressStage: args.stage,
+        progressMessage: args.message,
       })
       .where(eq(siteVersions.id, args.siteVersionId));
 

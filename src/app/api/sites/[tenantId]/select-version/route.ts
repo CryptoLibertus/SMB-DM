@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { sites, siteVersions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { handleApiError } from "@/lib/errors";
+import { requireTenantAuth } from "@/lib/auth";
 
 const SelectVersionSchema = z.object({
   versionId: z.uuid(),
@@ -17,6 +18,10 @@ export async function POST(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
+
     const body = await req.json();
     const { versionId } = SelectVersionSchema.parse(body);
 

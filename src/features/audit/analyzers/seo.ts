@@ -23,7 +23,7 @@ async function fetchRobotsTxt(url: string): Promise<string | null> {
   try {
     const origin = new URL(url).origin;
     const resp = await fetch(`${origin}/robots.txt`, {
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(15_000),
     });
     if (!resp.ok) return null;
     const text = await resp.text();

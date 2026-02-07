@@ -13,9 +13,14 @@ export async function GET(
 ) {
   const { id } = await params;
 
+  // Single query: auditResult + demoSession via LEFT JOIN
   const rows = await db
-    .select()
+    .select({
+      audit: auditResults,
+      contactEmail: demoSessions.contactEmail,
+    })
     .from(auditResults)
+    .leftJoin(demoSessions, eq(demoSessions.auditResultId, auditResults.id))
     .where(eq(auditResults.id, id))
     .limit(1);
 
@@ -23,7 +28,7 @@ export async function GET(
     return NextResponse.json(error("Audit not found"), { status: 404 });
   }
 
-  const row = rows[0];
+  const { audit: row, contactEmail } = rows[0];
 
   // Determine the current stage from the completedStage counter
   const completed = row.completedStage ?? 0;
@@ -50,49 +55,54 @@ export async function GET(
   const isComplete = completed >= 4;
 
   // When audit is complete and has a tenant, look up generation state
+  // Combined: site + siteVersions via LEFT JOIN
   let generation: {
     generationId: string;
     stage: string;
-    versions: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: unknown }[];
+    versions: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: unknown; progressStage: string | null; progressMessage: string | null }[];
   } | undefined;
 
   if (isComplete && row.tenantId) {
-    const [site] = await db
-      .select()
+    const siteWithVersions = await db
+      .select({
+        siteId: sites.id,
+        generationId: sites.generationId,
+        versionId: siteVersions.id,
+        versionNumber: siteVersions.versionNumber,
+        versionStatus: siteVersions.status,
+        previewUrl: siteVersions.previewUrl,
+        designMeta: siteVersions.designMeta,
+        progressStage: siteVersions.progressStage,
+        progressMessage: siteVersions.progressMessage,
+      })
       .from(sites)
-      .where(eq(sites.tenantId, row.tenantId))
-      .limit(1);
+      .leftJoin(siteVersions, eq(siteVersions.siteId, sites.id))
+      .where(eq(sites.tenantId, row.tenantId));
 
-    if (site && site.generationId) {
-      const versions = await db
-        .select()
-        .from(siteVersions)
-        .where(eq(siteVersions.siteId, site.id));
+    if (siteWithVersions.length > 0 && siteWithVersions[0].generationId) {
+      const versions = siteWithVersions
+        .filter((r) => r.versionId !== null)
+        .map((r) => ({
+          id: r.versionId!,
+          versionNumber: r.versionNumber!,
+          status: r.versionStatus!,
+          previewUrl: r.previewUrl || null,
+          designMeta: r.designMeta,
+          progressStage: r.progressStage,
+          progressMessage: r.progressMessage,
+        }));
 
       const readyCount = versions.filter((v) => v.status === "ready").length;
       const generatingCount = versions.filter((v) => v.status === "generating").length;
       const genComplete = generatingCount === 0 && versions.length > 0;
 
       generation = {
-        generationId: site.generationId,
+        generationId: siteWithVersions[0].generationId,
         stage: genComplete ? (readyCount > 0 ? "complete" : "error") : "generating",
-        versions: versions.map((v) => ({
-          id: v.id,
-          versionNumber: v.versionNumber,
-          status: v.status,
-          previewUrl: v.previewUrl || null,
-          designMeta: v.designMeta,
-        })),
+        versions,
       };
     }
   }
-
-  // Look up linked demoSession for contactEmail
-  const [demoSession] = await db
-    .select({ contactEmail: demoSessions.contactEmail })
-    .from(demoSessions)
-    .where(eq(demoSessions.auditResultId, id))
-    .limit(1);
 
   return NextResponse.json(
     success({
@@ -100,7 +110,7 @@ export async function GET(
       stageNumber,
       totalStages: 4,
       isComplete,
-      contactEmail: demoSession?.contactEmail ?? null,
+      contactEmail: contactEmail ?? null,
       auditResult: {
         seoScore: row.seoScore,
         mobileScore: row.mobileScore,

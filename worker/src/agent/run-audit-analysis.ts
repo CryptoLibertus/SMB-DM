@@ -23,6 +23,8 @@ export async function runAuditAnalysis(
 
   const auditTools = createAuditToolServer();
 
+  const ANALYSIS_TIMEOUT_MS = 120_000; // 2 minutes
+
   try {
     console.log(
       `[audit-analysis] Starting AI analysis for audit ${req.auditId} (${req.targetUrl})`
@@ -34,42 +36,52 @@ export async function runAuditAnalysis(
       .set({ aiAnalysisStatus: "analyzing" })
       .where(eq(auditResults.id, req.auditId));
 
-    for await (const message of query({
-      prompt: userPrompt,
-      options: {
-        customSystemPrompt: systemPrompt,
-        model: "claude-sonnet-4-5-20250929",
-        cwd: workspacePath,
-        allowedTools: [
-          "mcp__audit-tools__fetch_page",
-          "mcp__audit-tools__store_analysis",
-        ],
-        mcpServers: {
-          "audit-tools": auditTools,
+    const abortController = new AbortController();
+    const timeout = setTimeout(() => {
+      abortController.abort();
+    }, ANALYSIS_TIMEOUT_MS);
+
+    try {
+      for await (const message of query({
+        prompt: userPrompt,
+        options: {
+          customSystemPrompt: systemPrompt,
+          model: "claude-sonnet-4-5-20250929",
+          cwd: workspacePath,
+          allowedTools: [
+            "mcp__audit-tools__fetch_page",
+            "mcp__audit-tools__store_analysis",
+          ],
+          mcpServers: {
+            "audit-tools": auditTools,
+          },
+          permissionMode: "bypassPermissions",
+          extraArgs: { "dangerously-skip-permissions": null },
+          maxTurns: 15,
+          abortController,
+          stderr: (data: string) =>
+            console.error(`[audit-analysis-stderr] ${req.auditId}: ${data}`),
         },
-        permissionMode: "bypassPermissions",
-        extraArgs: { "dangerously-skip-permissions": null },
-        maxTurns: 15,
-        stderr: (data: string) =>
-          console.error(`[audit-analysis-stderr] ${req.auditId}: ${data}`),
-      },
-    })) {
-      if (message.type === "result") {
-        if (message.subtype === "success") {
-          console.log(
-            `[audit-analysis] Audit ${req.auditId} completed successfully (cost: $${message.total_cost_usd.toFixed(2)})`
-          );
-        } else {
-          const errorMsg = `Agent ended with ${message.subtype} after ${message.num_turns} turns`;
-          console.error(
-            `[audit-analysis] Audit ${req.auditId} failed: ${errorMsg}`
-          );
-          await db
-            .update(auditResults)
-            .set({ aiAnalysisStatus: "failed" })
-            .where(eq(auditResults.id, req.auditId));
+      })) {
+        if (message.type === "result") {
+          if (message.subtype === "success") {
+            console.log(
+              `[audit-analysis] Audit ${req.auditId} completed successfully (cost: $${message.total_cost_usd.toFixed(2)})`
+            );
+          } else {
+            const errorMsg = `Agent ended with ${message.subtype} after ${message.num_turns} turns`;
+            console.error(
+              `[audit-analysis] Audit ${req.auditId} failed: ${errorMsg}`
+            );
+            await db
+              .update(auditResults)
+              .set({ aiAnalysisStatus: "failed" })
+              .where(eq(auditResults.id, req.auditId));
+          }
         }
       }
+    } finally {
+      clearTimeout(timeout);
     }
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "Unknown error";

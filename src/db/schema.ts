@@ -7,6 +7,7 @@ import {
   timestamp,
   jsonb,
   pgEnum,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ── Enums ──────────────────────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ export const demoSessionStatusEnum = pgEnum("demo_session_status", [
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ownerUserId: text("owner_user_id"),
   businessName: text("business_name").notNull(),
   contactEmail: text("contact_email").notNull(),
   phone: text("phone"),
@@ -107,6 +109,20 @@ export const tenants = pgTable("tenants", {
   targetKeywords: text("target_keywords").array().default([]),
   timezone: text("timezone").notNull().default("America/New_York"),
   status: tenantStatusEnum("status").notNull().default("active"),
+  onboardingChecklist: jsonb("onboarding_checklist")
+    .$type<{
+      reviewedSite: boolean;
+      connectedDomain: boolean;
+      verifiedDns: boolean;
+      submittedChangeRequest: boolean;
+    }>()
+    .notNull()
+    .default({
+      reviewedSite: false,
+      connectedDomain: false,
+      verifiedDns: false,
+      submittedChangeRequest: false,
+    }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -167,11 +183,15 @@ export const siteVersions = pgTable("site_versions", {
     layoutType: string;
     typography: string;
   }>(),
+  progressStage: text("progress_stage"),
+  progressMessage: text("progress_message"),
   status: siteVersionStatusEnum("status").notNull().default("generating"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("site_versions_site_id_idx").on(table.siteId),
+]);
 
 export const deployments = pgTable("deployments", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -186,7 +206,9 @@ export const deployments = pgTable("deployments", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("deployments_site_id_idx").on(table.siteId),
+]);
 
 export const auditResults = pgTable("audit_results", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -258,7 +280,9 @@ export const auditResults = pgTable("audit_results", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("audit_results_tenant_id_idx").on(table.tenantId),
+]);
 
 export const blogPosts = pgTable("blog_posts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -277,7 +301,9 @@ export const blogPosts = pgTable("blog_posts", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("blog_posts_site_id_idx").on(table.siteId),
+]);
 
 export const changeRequests = pgTable("change_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -299,7 +325,9 @@ export const changeRequests = pgTable("change_requests", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("change_requests_site_id_idx").on(table.siteId),
+]);
 
 export const emailReports = pgTable("email_reports", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -321,7 +349,9 @@ export const emailReports = pgTable("email_reports", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("email_reports_tenant_id_idx").on(table.tenantId),
+]);
 
 export const demoSessions = pgTable("demo_sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -333,6 +363,26 @@ export const demoSessions = pgTable("demo_sessions", {
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   status: demoSessionStatusEnum("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => [
+  index("demo_sessions_audit_result_id_idx").on(table.auditResultId),
+]);
+
+export const rateLimitHits = pgTable("rate_limit_hits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: text("key").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => [
+  index("rate_limit_hits_key_created_at_idx").on(table.key, table.createdAt),
+]);
+
+export const processedWebhookEvents = pgTable("processed_webhook_events", {
+  id: text("id").primaryKey(), // Stripe event ID (evt_xxx)
+  eventType: text("event_type").notNull(),
+  processedAt: timestamp("processed_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });

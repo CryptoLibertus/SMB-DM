@@ -7,6 +7,7 @@ import { tenants } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateWeeklyReport, generateMonthlyReport } from "@/features/analytics/reports";
 import { sendWeeklyReport, sendMonthlyReport } from "@/features/analytics/report-emails";
+import { requireTenantAuth } from "@/lib/auth";
 
 const reportRequestSchema = z.object({
   type: z.enum(["weekly", "monthly"]),
@@ -19,6 +20,9 @@ export async function POST(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
 
     const tenantIdSchema = z.string().uuid();
     const parsedTenantId = tenantIdSchema.safeParse(tenantId);

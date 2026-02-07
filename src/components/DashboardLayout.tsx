@@ -51,13 +51,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white md:hidden">
+      <header className="sticky top-0 z-40 border-b border-border-subtle bg-white md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
-          <span className="text-lg font-semibold text-gray-900">Dashboard</span>
+          <span className="text-lg font-semibold text-foreground">Dashboard</span>
         </div>
-        <nav className="flex border-t border-gray-100">
+        <nav className="flex border-t border-border-subtle">
           {navItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
@@ -69,8 +69,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 href={item.href}
                 className={`flex flex-1 flex-col items-center gap-1 px-2 py-2 text-xs ${
                   isActive
-                    ? "text-blue-600"
-                    : "text-gray-500"
+                    ? "text-accent"
+                    : "text-text-muted"
                 }`}
               >
                 {item.icon}
@@ -83,10 +83,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-white md:block">
+        <aside className="hidden w-64 shrink-0 border-r border-border-subtle bg-white md:block">
           <div className="sticky top-0 flex h-screen flex-col">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <span className="text-lg font-semibold text-gray-900">
+            <div className="border-b border-border-subtle px-6 py-4">
+              <span className="text-lg font-semibold text-foreground">
                 Dashboard
               </span>
             </div>
@@ -102,8 +102,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     href={item.href}
                     className={`mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-accent/10 text-accent"
+                        : "text-foreground hover:bg-background"
                     }`}
                   >
                     {item.icon}

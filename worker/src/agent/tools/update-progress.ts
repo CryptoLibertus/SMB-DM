@@ -40,13 +40,8 @@ export const updateProgressTool = tool(
       .update(siteVersions)
       .set({
         status: dbStatus,
-        designMeta: {
-          colorPalette: [],
-          layoutType: "",
-          typography: "",
-          progressStage: args.stage,
-          progressMessage: args.message,
-        } as any,
+        progressStage: args.stage,
+        progressMessage: args.message,
       })
       .where(eq(siteVersions.id, args.siteVersionId));
 

@@ -3,6 +3,7 @@ import { success, error } from "@/types";
 import { handleApiError } from "@/lib/errors";
 import { requestRevision } from "@/features/content/change-request";
 import { z } from "zod/v4";
+import { requireTenantAuth } from "@/lib/auth";
 
 const reviseSchema = z.object({
   feedback: z.string().min(5, "Feedback must be at least 5 characters"),
@@ -15,6 +16,10 @@ export async function POST(
 ) {
   try {
     const { tenantId, id } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
+
     const body = await req.json();
     const parsed = reviseSchema.parse(body);
 

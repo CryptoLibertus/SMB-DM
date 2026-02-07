@@ -1,4 +1,16 @@
 import type { Request, Response, NextFunction } from "express";
+import { timingSafeEqual } from "crypto";
+
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Compare against self to maintain constant time even on length mismatch
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
 
 export function authMiddleware(
   req: Request,
@@ -20,7 +32,7 @@ export function authMiddleware(
     return;
   }
 
-  if (token !== secret) {
+  if (!timingSafeCompare(token, secret)) {
     res.status(403).json({ error: "Invalid auth token" });
     return;
   }

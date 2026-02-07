@@ -9,9 +9,9 @@ function SuccessContent() {
   useSearchParams();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center">
-        <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="rounded-lg border border-border-subtle bg-white p-8 shadow-sm">
           {/* Green checkmark */}
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <svg
@@ -29,36 +29,36 @@ function SuccessContent() {
             </svg>
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">
             You&apos;re all set!
           </h1>
-          <p className="mb-8 text-sm text-gray-500">
+          <p className="mb-8 text-sm text-text-muted">
             Your subscription is active. Here&apos;s what happens next:
           </p>
 
           {/* Next steps */}
           <ol className="mb-8 space-y-4 text-left">
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
                 1
               </span>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 We&apos;re deploying your website now (~2 minutes)
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
                 2
               </span>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 Check your email for a welcome message with dashboard login
               </p>
             </li>
             <li className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
                 3
               </span>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 Set up your custom domain from the dashboard
               </p>
             </li>
@@ -67,7 +67,7 @@ function SuccessContent() {
           {/* CTA button */}
           <Link
             href="/dashboard"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            className="inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
           >
             Go to Dashboard
             <svg
@@ -81,11 +81,11 @@ function SuccessContent() {
             </svg>
           </Link>
 
-          <p className="mt-6 text-xs text-gray-400">
+          <p className="mt-6 text-xs text-text-light">
             Need help?{" "}
             <a
               href="mailto:support@smb-dm.com"
-              className="text-blue-600 hover:underline"
+              className="text-accent hover:underline"
             >
               Email support@smb-dm.com
             </a>
@@ -101,7 +101,7 @@ export default function SuccessPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-text-muted">Loading...</p>
         </div>
       }
     >

@@ -6,6 +6,7 @@ import { eq, desc } from "drizzle-orm";
 import { handleApiError } from "@/lib/errors";
 import { generateBlogPost } from "@/features/content/blog-generation";
 import { z } from "zod/v4";
+import { requireTenantAuth } from "@/lib/auth";
 
 // GET /api/sites/[tenantId]/blog — List blog posts (status, schedule)
 export async function GET(
@@ -14,6 +15,9 @@ export async function GET(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
 
     const [site] = await db
       .select()
@@ -49,6 +53,10 @@ export async function POST(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
+
     const body = await req.json();
     const parsed = generateBlogSchema.parse(body);
 

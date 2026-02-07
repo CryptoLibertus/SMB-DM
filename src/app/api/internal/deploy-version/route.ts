@@ -6,6 +6,17 @@ import { siteVersions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { deploySiteVersion } from "@/features/generation/deploy";
 import { handleApiError } from "@/lib/errors";
+import { timingSafeEqual } from "crypto";
+
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
 
 export const maxDuration = 120;
 
@@ -28,7 +39,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!authHeader || !authHeader.startsWith("Bearer ") || authHeader.slice(7) !== expectedSecret) {
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token || !timingSafeCompare(token, expectedSecret)) {
       return NextResponse.json(
         error("Unauthorized"),
         { status: 401 }

@@ -60,6 +60,8 @@ export async function GET(
         status: v.status,
         previewUrl: v.previewUrl || null,
         designMeta: v.designMeta,
+        progressStage: v.progressStage,
+        progressMessage: v.progressMessage,
       })),
     })
   );

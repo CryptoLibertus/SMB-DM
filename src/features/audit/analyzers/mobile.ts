@@ -23,7 +23,7 @@ async function fetchLighthouseScore(url: string): Promise<number | null> {
     if (apiKey) params.set("key", apiKey);
 
     const resp = await fetch(`${PAGESPEED_API_URL}?${params}`, {
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!resp.ok) return null;

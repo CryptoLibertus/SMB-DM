@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { success, error } from "@/types";
 import { handleApiError } from "@/lib/errors";
 import { approveChange } from "@/features/content/change-request";
+import { requireTenantAuth } from "@/lib/auth";
 
 // POST /api/sites/[tenantId]/changes/[id]/approve — Approve and deploy a change
 export async function POST(
@@ -10,6 +11,9 @@ export async function POST(
 ) {
   try {
     const { tenantId, id } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
 
     await approveChange(id);
 

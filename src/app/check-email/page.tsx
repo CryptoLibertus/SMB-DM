@@ -1,11 +1,11 @@
 export default function CheckEmailPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm text-center">
-        <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-blue-50">
+        <div className="rounded-lg border border-border-subtle bg-white p-8 shadow-sm">
+          <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
             <svg
-              className="h-7 w-7 text-blue-600"
+              className="h-7 w-7 text-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -19,16 +19,16 @@ export default function CheckEmailPage() {
             </svg>
           </div>
 
-          <h1 className="mb-2 text-xl font-bold text-gray-900">
+          <h1 className="mb-2 text-xl font-bold text-foreground">
             Check your email
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-muted">
             We sent you a magic link. Click it to sign in to your dashboard.
           </p>
 
-          <div className="mt-6 rounded-lg bg-gray-50 p-3 text-xs text-gray-400">
+          <div className="mt-6 rounded-lg bg-background p-3 text-xs text-text-light">
             Didn&apos;t receive it? Check your spam folder, or{" "}
-            <a href="/login" className="text-blue-600 hover:underline">
+            <a href="/login" className="text-accent hover:underline">
               try again
             </a>
             .

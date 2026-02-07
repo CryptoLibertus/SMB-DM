@@ -1,11 +1,15 @@
 import type { CrawlResult, ExtractedImage } from "./types";
+import { validateUrlForSsrf } from "@/lib/ssrf";
 
-const FETCH_TIMEOUT_MS = 5_000;
+const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 export async function crawlUrl(url: string): Promise<CrawlResult> {
   try {
+    // SSRF protection: validate URL before fetching
+    await validateUrlForSsrf(url);
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -136,6 +140,7 @@ export async function storeScreenshot(
   const blob = await put(filename, buffer, {
     access: "public",
     contentType: "image/png",
+    addRandomSuffix: true,
   });
   return blob.url;
 }

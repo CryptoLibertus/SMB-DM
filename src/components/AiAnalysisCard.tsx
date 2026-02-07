@@ -50,7 +50,7 @@ export default function AiAnalysisCard({
   analysis: AiAnalysis;
 }) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    () => new Set(CATEGORIES)
+    () => new Set()
   );
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(
     () => new Set()

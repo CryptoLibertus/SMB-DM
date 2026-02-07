@@ -1,13 +1,15 @@
 const VERCEL_API_BASE = "https://api.vercel.com";
 
-if (!process.env.VERCEL_API_TOKEN) {
-  throw new Error("VERCEL_API_TOKEN is not set");
+function getHeaders() {
+  const token = process.env.VERCEL_API_TOKEN;
+  if (!token) {
+    throw new Error("VERCEL_API_TOKEN is not set");
+  }
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 }
-
-const headers = {
-  Authorization: `Bearer ${process.env.VERCEL_API_TOKEN}`,
-  "Content-Type": "application/json",
-};
 
 /** Append ?teamId=... if VERCEL_TEAM_ID is set */
 function withTeamId(url: string): string {
@@ -20,7 +22,7 @@ function withTeamId(url: string): string {
 export async function createProject(name: string) {
   const res = await fetch(withTeamId(`${VERCEL_API_BASE}/v9/projects`), {
     method: "POST",
-    headers,
+    headers: getHeaders(),
     body: JSON.stringify({ name, framework: "nextjs" }),
   });
   if (!res.ok) {
@@ -41,7 +43,7 @@ async function disableDeploymentProtection(projectId: string) {
     withTeamId(`${VERCEL_API_BASE}/v9/projects/${projectId}`),
     {
       method: "PATCH",
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({
         oidcTokenConfig: { enabled: false },
         passwordProtection: null,
@@ -60,7 +62,7 @@ async function disableDeploymentProtection(projectId: string) {
 export async function getProject(projectId: string) {
   const res = await fetch(
     withTeamId(`${VERCEL_API_BASE}/v9/projects/${projectId}`),
-    { headers },
+    { headers: getHeaders() },
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -87,7 +89,7 @@ export async function createDeployment(
     withTeamId(`${VERCEL_API_BASE}/v13/deployments`),
     {
       method: "POST",
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({
         name: project.name,
         project: projectId,
@@ -108,7 +110,7 @@ export async function attachDomain(projectId: string, domain: string) {
     withTeamId(`${VERCEL_API_BASE}/v10/projects/${projectId}/domains`),
     {
       method: "POST",
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({ name: domain }),
     }
   );
@@ -122,7 +124,7 @@ export async function attachDomain(projectId: string, domain: string) {
 export async function getDeployment(deploymentId: string) {
   const res = await fetch(
     withTeamId(`${VERCEL_API_BASE}/v13/deployments/${deploymentId}`),
-    { headers },
+    { headers: getHeaders() },
   );
   if (!res.ok) {
     const body = await res.text().catch(() => "");

@@ -39,25 +39,25 @@ export default function DnsWizardPage() {
   }, [status]);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen bg-background px-4 py-8">
       <div className="mx-auto max-w-2xl">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
           DNS Setup Wizard
         </h1>
-        <p className="mb-8 text-gray-500">
+        <p className="mb-8 text-text-muted">
           Point your domain to your new website in a few steps.
         </p>
 
         {/* Step 1: Detected registrar */}
-        <div className="mb-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
           <div className="flex items-start gap-3">
             <div
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
                 step > 1
-                  ? "bg-blue-600 text-white"
+                  ? "bg-accent text-white"
                   : step === 1
-                    ? "border-2 border-blue-600 text-blue-600"
-                    : "border-2 border-gray-200 text-gray-400"
+                    ? "border-2 border-accent text-accent"
+                    : "border-2 border-border-subtle text-text-light"
               }`}
             >
               {step > 1 ? (
@@ -69,18 +69,18 @@ export default function DnsWizardPage() {
               )}
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-900">
+              <h3 className="font-medium text-foreground">
                 Registrar Detected
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Your domain <span className="font-medium text-gray-700">{MOCK_DNS.domain}</span> is
+              <p className="mt-1 text-sm text-text-muted">
+                Your domain <span className="font-medium text-foreground">{MOCK_DNS.domain}</span> is
                 registered with{" "}
-                <span className="font-medium text-gray-700">{MOCK_DNS.registrar}</span>.
+                <span className="font-medium text-foreground">{MOCK_DNS.registrar}</span>.
               </p>
               {step === 1 && (
                 <button
                   onClick={() => setStep(2)}
-                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                  className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                 >
                   Continue
                 </button>
@@ -92,17 +92,17 @@ export default function DnsWizardPage() {
         {/* Step 2: DNS records to change */}
         <div
           className={`mb-4 rounded-lg border bg-white p-6 shadow-sm ${
-            step >= 2 ? "border-gray-200" : "border-gray-100 opacity-50"
+            step >= 2 ? "border-border-subtle" : "border-border-subtle opacity-50"
           }`}
         >
           <div className="flex items-start gap-3">
             <div
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
                 step > 2
-                  ? "bg-blue-600 text-white"
+                  ? "bg-accent text-white"
                   : step === 2
-                    ? "border-2 border-blue-600 text-blue-600"
-                    : "border-2 border-gray-200 text-gray-400"
+                    ? "border-2 border-accent text-accent"
+                    : "border-2 border-border-subtle text-text-light"
               }`}
             >
               {step > 2 ? (
@@ -114,35 +114,35 @@ export default function DnsWizardPage() {
               )}
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-900">
+              <h3 className="font-medium text-foreground">
                 Update DNS Records
               </h3>
               {step >= 2 && (
                 <>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-text-muted">
                     Log in to {MOCK_DNS.registrar} and update the following DNS
                     records:
                   </p>
 
-                  <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border-subtle">
                     <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="bg-gray-50">
-                          <th className="px-4 py-2 font-medium text-gray-500">Type</th>
-                          <th className="px-4 py-2 font-medium text-gray-500">Name</th>
-                          <th className="px-4 py-2 font-medium text-gray-500">Value</th>
+                        <tr className="bg-background">
+                          <th className="px-4 py-2 font-medium text-text-muted">Type</th>
+                          <th className="px-4 py-2 font-medium text-text-muted">Name</th>
+                          <th className="px-4 py-2 font-medium text-text-muted">Value</th>
                         </tr>
                       </thead>
                       <tbody>
                         {MOCK_DNS.records.map((record, i) => (
-                          <tr key={i} className="border-t border-gray-100">
-                            <td className="px-4 py-2 font-mono text-xs text-gray-700">
+                          <tr key={i} className="border-t border-border-subtle">
+                            <td className="px-4 py-2 font-mono text-xs text-foreground">
                               {record.type}
                             </td>
-                            <td className="px-4 py-2 font-mono text-xs text-gray-700">
+                            <td className="px-4 py-2 font-mono text-xs text-foreground">
                               {record.name}
                             </td>
-                            <td className="px-4 py-2 font-mono text-xs text-blue-600">
+                            <td className="px-4 py-2 font-mono text-xs text-accent">
                               {record.value}
                             </td>
                           </tr>
@@ -162,7 +162,7 @@ export default function DnsWizardPage() {
                         setStep(3);
                         setStatus("verifying");
                       }}
-                      className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                      className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                     >
                       I&apos;ve updated my records
                     </button>
@@ -176,7 +176,7 @@ export default function DnsWizardPage() {
         {/* Step 3: Verification status */}
         <div
           className={`rounded-lg border bg-white p-6 shadow-sm ${
-            step >= 3 ? "border-gray-200" : "border-gray-100 opacity-50"
+            step >= 3 ? "border-border-subtle" : "border-border-subtle opacity-50"
           }`}
         >
           <div className="flex items-start gap-3">
@@ -185,8 +185,8 @@ export default function DnsWizardPage() {
                 status === "verified"
                   ? "bg-green-600 text-white"
                   : step === 3
-                    ? "border-2 border-blue-600 text-blue-600"
-                    : "border-2 border-gray-200 text-gray-400"
+                    ? "border-2 border-accent text-accent"
+                    : "border-2 border-border-subtle text-text-light"
               }`}
             >
               {status === "verified" ? (
@@ -198,15 +198,15 @@ export default function DnsWizardPage() {
               )}
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-900">
+              <h3 className="font-medium text-foreground">
                 DNS Verification
               </h3>
               {step >= 3 && (
                 <div className="mt-2">
                   {status === "verifying" && (
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-                      <span className="text-sm text-gray-600">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                      <span className="text-sm text-text-muted">
                         Waiting for DNS propagation...
                       </span>
                     </div>
@@ -223,7 +223,7 @@ export default function DnsWizardPage() {
                       </div>
                       <a
                         href="/dashboard"
-                        className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                        className="mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
                       >
                         Go to Dashboard
                       </a>

@@ -17,6 +17,7 @@ export async function storeSiteFiles(
   const blob = await put(pathname, payload, {
     access: "public",
     contentType: "application/json",
+    addRandomSuffix: true,
   });
 
   return blob.url;

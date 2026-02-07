@@ -6,6 +6,7 @@ import {
   getAnalyticsData,
   dateRangeSchema,
 } from "@/features/analytics/dashboard";
+import { requireTenantAuth } from "@/lib/auth";
 
 // GET /api/analytics/[tenantId] — Fetch analytics data from PostHog
 export async function GET(
@@ -14,6 +15,9 @@ export async function GET(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
 
     const tenantIdSchema = z.string().uuid();
     const parsedTenantId = tenantIdSchema.safeParse(tenantId);

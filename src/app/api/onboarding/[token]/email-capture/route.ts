@@ -33,7 +33,7 @@ export async function POST(
       });
     }
 
-    if (session.status === "expired") {
+    if (session.status === "expired" || session.expiresAt < new Date()) {
       return NextResponse.json(error("Demo session has expired"), {
         status: 410,
       });

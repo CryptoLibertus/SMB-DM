@@ -77,23 +77,38 @@ export async function runGenerationPipeline(
         .where(eq(auditResults.id, auditResultId));
     }
 
-    // Create Vercel project
-    const vercelProjectId = await createSiteProject(
-      tenantId,
-      businessContext.businessName
-    );
+    // Find existing site or create new one
+    const [existingSite] = await db
+      .select()
+      .from(sites)
+      .where(eq(sites.tenantId, tenantId))
+      .limit(1);
 
-    // Create Site record
-    const [site] = await db
-      .insert(sites)
-      .values({
+    let site;
+    if (existingSite) {
+      const [updated] = await db
+        .update(sites)
+        .set({ generationId, status: "demo", updatedAt: new Date() })
+        .where(eq(sites.id, existingSite.id))
+        .returning();
+      site = updated;
+    } else {
+      const vercelProjectId = await createSiteProject(
         tenantId,
-        vercelProjectId,
-        generationId,
-        previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
-        status: "demo",
-      })
-      .returning();
+        businessContext.businessName
+      );
+      const [created] = await db
+        .insert(sites)
+        .values({
+          tenantId,
+          vercelProjectId,
+          generationId,
+          previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
+          status: "demo",
+        })
+        .returning();
+      site = created;
+    }
 
     // Create 3 SiteVersion records
     const versionRecords = await Promise.all(

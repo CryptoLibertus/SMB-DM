@@ -63,16 +63,11 @@ export default function ProgressBar({ currentStage, stages, timeEstimate }: Prog
                   {stage.label}
                 </p>
                 <p
-                  className={`mt-0.5 text-xs ${
+                  className={`mt-0.5 hidden text-xs sm:block ${
                     isActive || isCompleted ? "text-text-muted" : "text-text-light"
                   }`}
                 >
-                  <span className="sm:hidden">
-                    {stage.label}
-                  </span>
-                  <span className="hidden sm:inline">
-                    {stage.description}
-                  </span>
+                  {stage.description}
                 </p>
               </div>
             </div>

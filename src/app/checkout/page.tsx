@@ -16,14 +16,14 @@ function FAQItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="border-b border-gray-200 last:border-b-0">
+    <div className="border-b border-border-subtle last:border-b-0">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between py-3 text-left text-sm font-medium text-gray-900"
+        className="flex w-full items-center justify-between py-3 text-left text-sm font-medium text-foreground"
       >
         {question}
         <svg
-          className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -33,7 +33,7 @@ function FAQItem({
         </svg>
       </button>
       {isOpen && (
-        <p className="pb-3 text-sm text-gray-600">{answer}</p>
+        <p className="pb-3 text-sm text-text-muted">{answer}</p>
       )}
     </div>
   );
@@ -98,13 +98,26 @@ function CheckoutContent() {
   ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border-subtle bg-white">
+        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-4">
+          <Link href="/" className="text-lg font-bold tracking-tight text-foreground">
+            SMB<span className="text-accent">-DM</span>
+          </Link>
+          <Link href="/login" className="text-sm font-medium text-text-muted transition-colors hover:text-foreground">
+            Sign in
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Back link */}
         {auditId && (
           <Link
             href={`/demo/${auditId}`}
-            className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="mb-4 inline-flex items-center gap-1 text-sm text-text-muted hover:text-foreground"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -115,9 +128,9 @@ function CheckoutContent() {
 
         {/* Canceled banner */}
         {canceled && (
-          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="font-medium text-blue-900">Changed your mind?</p>
-            <p className="mt-1 text-sm text-blue-700">
+          <div className="mb-4 rounded-lg border border-accent/30 bg-accent/5 p-4">
+            <p className="font-medium text-foreground">Changed your mind?</p>
+            <p className="mt-1 text-sm text-text-muted">
               No worries — your redesign is still saved. When you&apos;re ready,
               just hit the button below to continue. Remember, there&apos;s a
               30-day money-back guarantee.
@@ -125,24 +138,24 @@ function CheckoutContent() {
           </div>
         )}
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h1 className="mb-1 text-xl font-bold text-gray-900">
+        <div className="rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
+          <h1 className="mb-1 text-xl font-bold text-foreground">
             Complete Your Subscription
           </h1>
-          <p className="mb-6 text-sm text-gray-500">
+          <p className="mb-6 text-sm text-text-muted">
             Get your new website live with everything included.
           </p>
 
           {/* Plan summary */}
-          <div className="mb-6 rounded-lg bg-gray-50 p-4">
+          <div className="mb-6 rounded-lg bg-background p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">
+                <p className="font-medium text-foreground">
                   Website Refresh & Growth
                 </p>
-                <p className="text-sm text-gray-500">Monthly subscription</p>
+                <p className="text-sm text-text-muted">Monthly subscription</p>
               </div>
-              <p className="text-xl font-bold text-gray-900">$99.95/mo</p>
+              <p className="text-xl font-bold text-foreground">$99.95/mo</p>
             </div>
           </div>
 
@@ -155,9 +168,9 @@ function CheckoutContent() {
               "5 change requests per month",
               "SSL certificate included",
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-2 text-sm text-gray-700">
+              <li key={feature} className="flex items-start gap-2 text-sm text-foreground">
                 <svg
-                  className="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-accent"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -176,27 +189,27 @@ function CheckoutContent() {
 
           {/* Version label */}
           {versionId && (
-            <p className="mb-4 text-xs text-gray-400">
+            <p className="mb-4 text-xs text-text-light">
               Your custom website
             </p>
           )}
 
           {/* Trust badges */}
-          <div className="mb-4 flex items-center justify-center gap-4 text-xs text-gray-500">
+          <div className="mb-4 flex items-center justify-center gap-4 text-xs text-text-muted">
             <span className="flex items-center gap-1">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               Stripe Secured
             </span>
-            <span className="text-gray-300">|</span>
+            <span className="text-border-subtle">|</span>
             <span className="flex items-center gap-1">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               256-bit SSL
             </span>
-            <span className="text-gray-300">|</span>
+            <span className="text-border-subtle">|</span>
             <span>Cancel Anytime</span>
           </div>
 
@@ -219,24 +232,24 @@ function CheckoutContent() {
           <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Redirecting to payment..." : canceled ? "Continue to Payment" : "Proceed to Payment"}
           </button>
 
-          <p className="mt-3 text-center text-xs text-gray-400">
+          <p className="mt-3 text-center text-xs text-text-light">
             Secure payment powered by Stripe. Cancel anytime.
           </p>
 
           {/* Social proof */}
-          <p className="mt-4 text-center text-xs text-gray-400">
+          <p className="mt-4 text-center text-xs text-text-light">
             Join businesses already growing with SMB-DM
           </p>
         </div>
 
         {/* FAQ section */}
-        <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold text-gray-900">
+        <div className="mt-6 rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-foreground">
             Frequently Asked Questions
           </h2>
           <div>
@@ -252,6 +265,7 @@ function CheckoutContent() {
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -261,7 +275,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-text-muted">Loading...</p>
         </div>
       }
     >

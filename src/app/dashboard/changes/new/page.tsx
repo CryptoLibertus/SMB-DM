@@ -32,14 +32,14 @@ export default function NewChangeRequestPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Request a Change</h1>
+      <h1 className="mb-6 text-2xl font-bold text-foreground">Request a Change</h1>
 
-      <div className="max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="max-w-2xl rounded-lg border border-border-subtle bg-white p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label
               htmlFor="requestType"
-              className="mb-1 block text-sm font-medium text-gray-700"
+              className="mb-1 block text-sm font-medium text-foreground"
             >
               Change Type
             </label>
@@ -47,7 +47,7 @@ export default function NewChangeRequestPage() {
               id="requestType"
               value={requestType}
               onChange={(e) => setRequestType(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             >
               {REQUEST_TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -60,7 +60,7 @@ export default function NewChangeRequestPage() {
           <div>
             <label
               htmlFor="description"
-              className="mb-1 block text-sm font-medium text-gray-700"
+              className="mb-1 block text-sm font-medium text-foreground"
             >
               Description
             </label>
@@ -71,14 +71,14 @@ export default function NewChangeRequestPage() {
               required
               rows={5}
               placeholder="Describe what you'd like changed. Be specific about which page, what text, or what should be added..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-border-subtle px-3 py-2.5 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
           <div>
             <label
               htmlFor="files"
-              className="mb-1 block text-sm font-medium text-gray-700"
+              className="mb-1 block text-sm font-medium text-foreground"
             >
               Attachments (optional)
             </label>
@@ -87,13 +87,13 @@ export default function NewChangeRequestPage() {
               type="file"
               multiple
               onChange={(e) => setFiles(e.target.files)}
-              className="w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full text-sm text-text-muted file:mr-4 file:rounded-lg file:border-0 file:bg-accent/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-accent hover:file:bg-accent/15"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-text-light">
               Upload images, PDFs, or other reference files
             </p>
             {files && files.length > 0 && (
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-text-muted">
                 {files.length} file(s) selected
               </p>
             )}
@@ -103,14 +103,14 @@ export default function NewChangeRequestPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Submit Request"}
             </button>
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="rounded-lg border border-border-subtle px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background"
             >
               Cancel
             </button>

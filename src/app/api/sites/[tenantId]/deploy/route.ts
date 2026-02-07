@@ -5,6 +5,7 @@ import { sites } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { deploySiteVersion } from "@/features/generation/deploy";
 import { handleApiError } from "@/lib/errors";
+import { requireTenantAuth } from "@/lib/auth";
 
 // POST /api/sites/[tenantId]/deploy — Deploy selected version to production
 export async function POST(
@@ -13,6 +14,9 @@ export async function POST(
 ) {
   try {
     const { tenantId } = await params;
+
+    const authError = await requireTenantAuth(tenantId);
+    if (authError) return authError;
 
     // Get site for tenant
     const [site] = await db

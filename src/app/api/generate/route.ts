@@ -10,6 +10,7 @@ import { createSiteProject } from "@/features/generation/deploy";
 import { DESIGN_DIRECTIVES } from "@/features/generation/types";
 import { handleApiError } from "@/lib/errors";
 import type { AuditPipelineResult } from "@/features/audit/types";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -47,6 +48,11 @@ const GenerateRequestSchema = z.object({
 // POST /api/generate — Create DB records, then trigger Fly.io worker
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 3 per IP per 10 minutes
+    const ip = getClientIp(req);
+    const rateLimitError = await rateLimit(`generate:${ip}`, 3, 600);
+    if (rateLimitError) return rateLimitError;
+
     const body = await req.json();
     const parsed = GenerateRequestSchema.parse(body);
 
@@ -89,22 +95,39 @@ export async function POST(req: NextRequest) {
         .where(eq(auditResults.id, parsed.auditResultId));
     }
 
-    // 3. Create real Vercel project, then create site record
-    const vercelProjectId = await createSiteProject(
-      tenantId,
-      parsed.businessContext.businessName
-    );
+    // 3. Find existing site or create new one
+    const [existingSite] = await db
+      .select()
+      .from(sites)
+      .where(eq(sites.tenantId, tenantId))
+      .limit(1);
 
-    const [site] = await db
-      .insert(sites)
-      .values({
+    let site;
+    if (existingSite) {
+      // Re-generation: update the existing site's generationId
+      const [updated] = await db
+        .update(sites)
+        .set({ generationId, status: "demo", updatedAt: new Date() })
+        .where(eq(sites.id, existingSite.id))
+        .returning();
+      site = updated;
+    } else {
+      const vercelProjectId = await createSiteProject(
         tenantId,
-        vercelProjectId,
-        generationId,
-        previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
-        status: "demo",
-      })
-      .returning();
+        parsed.businessContext.businessName
+      );
+      const [created] = await db
+        .insert(sites)
+        .values({
+          tenantId,
+          vercelProjectId,
+          generationId,
+          previewDomain: `preview-${tenantId.slice(0, 8)}.vercel.app`,
+          status: "demo",
+        })
+        .returning();
+      site = created;
+    }
 
     // 4. Create 1 SiteVersion record
     const directive = DESIGN_DIRECTIVES[0];

@@ -45,6 +45,7 @@ interface SitePreview {
 }
 
 type Phase = "auditing" | "audit_done" | "generating" | "version_ready" | "error";
+type ErrorSource = "audit" | "generation";
 
 const POLL_INTERVAL_MS = 2_000;
 const AI_POLL_INTERVAL_MS = 3_000;
@@ -70,6 +71,8 @@ export default function DemoPage() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [sitePreview, setSitePreview] = useState<SitePreview | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorSource, setErrorSource] = useState<ErrorSource>("audit");
+  const [retryCount, setRetryCount] = useState(0);
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<{
     summary: string;
@@ -113,6 +116,7 @@ export default function DemoPage() {
           const json = await res.json();
           if (json.error) {
             setErrorMessage(json.error);
+            setErrorSource("audit");
             setPhase("error");
             return;
           }
@@ -215,7 +219,7 @@ export default function DemoPage() {
     return () => {
       cancelled = true;
     };
-  }, [auditId]);
+  }, [auditId, retryCount]);
 
   // ── Generation polling ─────────────────────────────────────────────────
   useEffect(() => {
@@ -234,6 +238,7 @@ export default function DemoPage() {
           const json = await res.json();
           if (json.error) {
             setErrorMessage(json.error);
+            setErrorSource("generation");
             setPhase("error");
             return;
           }
@@ -260,6 +265,7 @@ export default function DemoPage() {
               setPhase("version_ready");
             } else {
               setErrorMessage("Failed to generate your website");
+              setErrorSource("generation");
               setPhase("error");
             }
             return;
@@ -321,6 +327,7 @@ export default function DemoPage() {
         const data = await res.json();
         if (!res.ok || data.error) {
           setErrorMessage(data.error || "Failed to start generation");
+          setErrorSource("generation");
           setPhase("error");
           return;
         }
@@ -328,6 +335,7 @@ export default function DemoPage() {
         setGenerationId(data.data.generationId);
       } catch {
         setErrorMessage("Failed to start generation. Please try again.");
+        setErrorSource("generation");
         setPhase("error");
       }
     },
@@ -393,10 +401,24 @@ export default function DemoPage() {
               {errorMessage || "Something went wrong"}
             </p>
             <button
-              onClick={() => window.location.reload()}
-              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              onClick={() => {
+                setErrorMessage(null);
+                if (errorSource === "generation") {
+                  // Go back to audit_done so user can re-submit
+                  setGenerationId(null);
+                  setSitePreview(null);
+                  setGenStage(0);
+                  setPhase("audit_done");
+                } else {
+                  // Re-poll audit — increment retryCount to re-trigger the effect
+                  setAuditStage(0);
+                  setRetryCount((c) => c + 1);
+                  setPhase("auditing");
+                }
+              }}
+              className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover"
             >
-              Try Again
+              {errorSource === "generation" ? "Try Generating Again" : "Retry Audit"}
             </button>
             <p className="mt-3 text-xs text-text-muted">
               Having trouble?{" "}
@@ -418,6 +440,23 @@ export default function DemoPage() {
             <p className="mt-2 text-center text-xs text-text-muted">
               Your data is analyzed securely and never shared.
             </p>
+
+            {/* Skeleton preview of audit results */}
+            <div className="mt-8 animate-pulse rounded-xl border border-border-subtle bg-white p-6">
+              <div className="mb-4 h-5 w-40 rounded bg-border-subtle" />
+              <div className="grid gap-4 sm:grid-cols-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2">
+                    <div className="h-12 w-12 rounded-full bg-border-subtle" />
+                    <div className="h-3 w-16 rounded bg-border-subtle" />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-3 w-full rounded bg-border-subtle" />
+                <div className="h-3 w-3/4 rounded bg-border-subtle" />
+              </div>
+            </div>
           </div>
         )}
 
@@ -506,23 +545,56 @@ export default function DemoPage() {
             <p className="mb-3 text-center text-sm text-text-muted">
               Here&apos;s your new website. Preview it, then go live.
             </p>
+
+            {/* Inline iframe preview */}
             <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
-              <div className="flex flex-col items-center gap-3 px-4 py-8">
+              {/* Browser chrome bar */}
+              <div className="flex items-center gap-2 border-b border-border-subtle bg-gray-50 px-4 py-2.5">
+                <div className="flex gap-1.5">
+                  <span className="h-3 w-3 rounded-full bg-red-400" />
+                  <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                  <span className="h-3 w-3 rounded-full bg-green-400" />
+                </div>
+                <div className="mx-2 flex-1 truncate rounded-md bg-white px-3 py-1 text-xs text-text-muted border border-border-subtle">
+                  {sitePreview.previewUrl}
+                </div>
                 <a
                   href={sitePreview.previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25"
+                  className="shrink-0 rounded-md p-1.5 text-text-muted transition-colors hover:bg-gray-200 hover:text-foreground"
+                  title="Open in new tab"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
-                  Open Preview in New Tab
                 </a>
-                <span className="max-w-full truncate text-xs text-text-muted">
-                  {sitePreview.previewUrl}
-                </span>
               </div>
+
+              {/* iframe */}
+              <div className="relative w-full" style={{ height: "70vh", minHeight: "480px" }}>
+                <iframe
+                  src={sitePreview.previewUrl}
+                  title="Site preview"
+                  className="absolute inset-0 h-full w-full"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              </div>
+            </div>
+
+            {/* View Full Site button */}
+            <div className="mt-4 flex justify-center">
+              <a
+                href={sitePreview.previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View Full Site
+              </a>
             </div>
 
             {/* Subscription includes */}

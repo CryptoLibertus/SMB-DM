@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { success, error } from "@/types";
 import { createCheckoutSession } from "@/features/billing/checkout";
 import { handleApiError } from "@/lib/errors";
