@@ -111,13 +111,13 @@ function TagInput({
 
   return (
     <div
-      className="flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-lg border border-gray-300 px-2 py-1.5 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
+      className="flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-xl border border-border-subtle px-2 py-1.5 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent"
       onClick={() => inputRef.current?.focus()}
     >
       {tags.map((tag, i) => (
         <span
           key={i}
-          className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-sm text-blue-700"
+          className="inline-flex items-center gap-1 rounded-lg bg-accent/10 px-2 py-0.5 text-sm text-accent"
         >
           {tag}
           <button
@@ -126,7 +126,7 @@ function TagInput({
               e.stopPropagation();
               removeTag(i);
             }}
-            className="ml-0.5 text-blue-400 hover:text-blue-600"
+            className="ml-0.5 text-accent/50 hover:text-accent"
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -144,8 +144,7 @@ function TagInput({
         onBlur={() => {
           if (inputValue.trim()) addTag(inputValue);
         }}
-        className="min-w-[120px] flex-1 border-none bg-transparent py-0.5 text-sm outline-none placeholder:text-gray-400"
-        placeholder={tags.length === 0 ? placeholder : "Type + Enter"}
+        className="min-w-[120px] flex-1 border-none bg-transparent py-0.5 text-sm outline-none placeholder:text-text-muted"
       />
     </div>
   );
@@ -217,18 +216,18 @@ export default function BusinessInfoForm({
   const isDisabled = disabled || submitting;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="mb-1 text-lg font-semibold text-gray-900">
+    <div className="rounded-xl border border-border-subtle bg-white p-6 shadow-sm">
+      <h3 className="mb-1 text-lg font-semibold text-foreground">
         Customize Your New Website
       </h3>
-      <p className="mb-4 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-text-muted">
         Takes about 30 seconds. We&apos;ll build a site matched to your brand.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="businessName" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="businessName" className="mb-1 block text-sm font-medium text-foreground">
               Business Name
             </label>
             <input
@@ -237,13 +236,13 @@ export default function BusinessInfoForm({
               required
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-xl border border-border-subtle px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
               placeholder="Acme Plumbing"
             />
           </div>
 
           <div>
-            <label htmlFor="industry" className="mb-1 block text-sm font-medium text-gray-700">
+            <label htmlFor="industry" className="mb-1 block text-sm font-medium text-foreground">
               Industry
             </label>
             <select
@@ -251,7 +250,7 @@ export default function BusinessInfoForm({
               required
               value={industry}
               onChange={(e) => setIndustry(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-xl border border-border-subtle px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             >
               <option value="">Select industry...</option>
               {INDUSTRIES.map((ind) => (
@@ -267,7 +266,7 @@ export default function BusinessInfoForm({
                 required
                 value={customIndustry}
                 onChange={(e) => setCustomIndustry(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="mt-2 w-full rounded-xl border border-border-subtle px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 placeholder="Enter your industry"
               />
             )}
@@ -275,7 +274,7 @@ export default function BusinessInfoForm({
         </div>
 
         <div>
-          <label htmlFor="contactEmail" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="contactEmail" className="mb-1 block text-sm font-medium text-foreground">
             Contact Email
           </label>
           <input
@@ -285,16 +284,16 @@ export default function BusinessInfoForm({
             value={contactEmail}
             onChange={(e) => !initialEmail && setContactEmail(e.target.value)}
             readOnly={!!initialEmail}
-            className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${initialEmail ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
+            className={`w-full rounded-xl border border-border-subtle px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent ${initialEmail ? "bg-background text-text-muted cursor-not-allowed" : "text-foreground"}`}
             placeholder="you@business.com"
           />
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-text-muted">
             {initialEmail ? "Email captured from your audit session." : "We\u2019ll send your preview here. No spam, ever."}
           </p>
         </div>
 
         <div>
-          <label htmlFor="services" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="services" className="mb-1 block text-sm font-medium text-foreground">
             Services
           </label>
           <TagInput
@@ -306,7 +305,7 @@ export default function BusinessInfoForm({
         </div>
 
         <div>
-          <label htmlFor="locations" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="locations" className="mb-1 block text-sm font-medium text-foreground">
             Locations Served
           </label>
           <TagInput
@@ -320,7 +319,7 @@ export default function BusinessInfoForm({
         <button
           type="submit"
           disabled={isDisabled}
-          className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {disabled && disabledReason ? (
             <>

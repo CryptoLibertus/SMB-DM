@@ -18,15 +18,15 @@ export default function FloatingCTA({
   if (dismissed) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-subtle bg-white/95 px-4 py-3 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-center gap-4">
-        <span className="hidden text-sm text-gray-500 sm:inline">
+        <span className="hidden text-sm text-text-muted sm:inline">
           $99.95/mo &middot; Cancel anytime
         </span>
         <button
           onClick={onClick}
           disabled={disabled}
-          className="rounded-lg bg-blue-600 px-8 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl bg-accent px-8 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Go Live Now
         </button>
@@ -36,7 +36,7 @@ export default function FloatingCTA({
           setDismissed(true);
           onDismiss?.();
         }}
-        className="absolute right-3 top-2 p-1 text-gray-400 hover:text-gray-600"
+        className="absolute right-3 top-2 p-1 text-text-muted hover:text-foreground"
         aria-label="Dismiss"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -6,6 +6,7 @@ import AuditResultCard from "@/components/AuditResultCard";
 import AiAnalysisCard from "@/components/AiAnalysisCard";
 import FloatingCTA from "@/components/FloatingCTA";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 // ── Audit stages for ProgressBar ────────────────────────────────────────────
@@ -342,11 +343,25 @@ export default function DemoPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white">
-      <div className="mx-auto max-w-4xl px-4 py-8 pb-24">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+    <div className="min-h-screen bg-background">
+      {/* ─── Dark header ─── */}
+      <section className="relative bg-surface-dark text-white">
+        <div className="grid-bg pointer-events-none absolute inset-0" />
+
+        <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <Link href="/" className="text-lg font-bold tracking-tight">
+            SMB<span className="text-accent">-DM</span>
+          </Link>
+          <Link
+            href="/login"
+            className="text-sm font-medium text-text-light transition-colors hover:text-white"
+          >
+            Sign in
+          </Link>
+        </nav>
+
+        <div className="relative z-10 mx-auto max-w-3xl px-6 pb-12 pt-8 text-center sm:pb-16 sm:pt-12">
+          <h1 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl lg:text-4xl">
             {phase === "auditing" || phase === "audit_done"
               ? "Analyzing Your Website"
               : phase === "generating"
@@ -355,9 +370,9 @@ export default function DemoPage() {
                   ? "Your New Website Is Ready"
                   : "Website Refresh"}
           </h1>
-          <p className="mt-2 text-gray-500">
+          <p className="mt-3 text-base text-text-light">
             {phase === "auditing"
-              ? "We're crawling your site and running a full audit..."
+              ? "We\u2019re crawling your site and running a full audit..."
               : phase === "audit_done"
                 ? "Audit complete! Tell us about your business to generate your new site."
                 : phase === "generating"
@@ -367,10 +382,13 @@ export default function DemoPage() {
                     : ""}
           </p>
         </div>
+      </section>
 
+      {/* ─── Content ─── */}
+      <div className="mx-auto max-w-4xl px-4 py-8 pb-24">
         {/* Error state */}
         {phase === "error" && (
-          <div className="mb-8 rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+          <div className="mb-8 rounded-xl border border-red-300/30 bg-red-50 p-6 text-center">
             <p className="font-medium text-red-800">
               {errorMessage || "Something went wrong"}
             </p>
@@ -380,9 +398,9 @@ export default function DemoPage() {
             >
               Try Again
             </button>
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-text-muted">
               Having trouble?{" "}
-              <a href="mailto:support@smb-dm.com" className="text-blue-600 underline hover:text-blue-700">
+              <a href="mailto:support@smb-dm.com" className="text-accent underline hover:text-accent-hover">
                 Email support@smb-dm.com
               </a>
             </p>
@@ -397,7 +415,7 @@ export default function DemoPage() {
               stages={AUDIT_STAGES}
               timeEstimate="This usually takes about 60 seconds..."
             />
-            <p className="mt-2 text-center text-xs text-gray-400">
+            <p className="mt-2 text-center text-xs text-text-muted">
               Your data is analyzed securely and never shared.
             </p>
           </div>
@@ -421,14 +439,14 @@ export default function DemoPage() {
 
         {/* AI Analysis */}
         {phase !== "auditing" && aiAnalysisStatus && !aiAnalysis && aiAnalysisStatus !== "failed" && (
-          <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
+          <div className="mb-8 rounded-xl border border-border-subtle bg-white p-6">
             <div className="flex items-center gap-3">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-accent border-t-transparent" />
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-foreground">
                   Running deep analysis...
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-text-muted">
                   Our AI is reviewing your site content and CRO effectiveness
                 </p>
               </div>
@@ -476,7 +494,7 @@ export default function DemoPage() {
               stages={GENERATION_STAGES}
               timeEstimate="Building your custom site... usually 2-5 minutes."
             />
-            <p className="mt-2 text-center text-xs text-gray-400">
+            <p className="mt-2 text-center text-xs text-text-muted">
               Feel free to keep this tab open while we work.
             </p>
           </div>
@@ -485,37 +503,37 @@ export default function DemoPage() {
         {/* Site preview */}
         {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
           <div className="mb-8">
-            <p className="mb-3 text-center text-sm text-gray-600">
+            <p className="mb-3 text-center text-sm text-text-muted">
               Here&apos;s your new website. Preview it, then go live.
             </p>
-            <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex flex-col items-center gap-3 bg-white px-4 py-8">
+            <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
+              <div className="flex flex-col items-center gap-3 px-4 py-8">
                 <a
                   href={sitePreview.previewUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                   Open Preview in New Tab
                 </a>
-                <span className="max-w-full truncate text-xs text-gray-400">
+                <span className="max-w-full truncate text-xs text-text-muted">
                   {sitePreview.previewUrl}
                 </span>
               </div>
             </div>
 
             {/* Subscription includes */}
-            <div className="mt-4 rounded-lg bg-gray-50 p-4">
-              <h4 className="mb-2 text-sm font-semibold text-gray-900">
+            <div className="mt-4 rounded-xl border border-border-subtle bg-white p-4">
+              <h4 className="mb-2 text-sm font-semibold text-foreground">
                 Your subscription includes
               </h4>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {SUBSCRIPTION_INCLUDES.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                    <svg className="h-3.5 w-3.5 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <li key={item} className="flex items-center gap-2 text-sm text-text-muted">
+                    <svg className="h-3.5 w-3.5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     {item}

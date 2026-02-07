@@ -148,10 +148,10 @@ function InsightCard({
 }) {
   return (
     <div
-      className={`rounded-lg border-l-4 p-4 ${severityStyles[severity]}`}
+      className={`rounded-xl border-l-4 p-4 ${severityStyles[severity]}`}
     >
       <div className="mb-2 flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
         {score !== undefined && (
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-bold ${severityBadge[severity]}`}
@@ -160,8 +160,8 @@ function InsightCard({
           </span>
         )}
       </div>
-      <p className="mb-2 text-sm text-gray-700">{diagnosis}</p>
-      <p className="text-xs text-gray-500">{fix}</p>
+      <p className="mb-2 text-sm text-foreground/80">{diagnosis}</p>
+      <p className="text-xs text-text-muted">{fix}</p>
     </div>
   );
 }
@@ -191,12 +191,12 @@ export default function AuditResultCard({
   const analyticsInsight = buildAnalyticsInsight(hasAnalytics, analyticsDetected);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-xl border border-border-subtle bg-white p-6 shadow-sm">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-foreground">
           Website Audit Results
         </h3>
-        <p className="text-sm text-gray-500">{targetUrl}</p>
+        <p className="text-sm text-text-muted">{targetUrl}</p>
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
@@ -228,15 +228,15 @@ export default function AuditResultCard({
         />
       </div>
 
-      <div className="rounded-lg bg-gray-50 p-4">
-        <h4 className="mb-3 text-sm font-semibold text-gray-900">
+      <div className="rounded-xl bg-background p-4">
+        <h4 className="mb-3 text-sm font-semibold text-foreground">
           What your new website includes
         </h4>
         <div className="grid gap-2 sm:grid-cols-2">
           {VALUE_PROPS.map((prop) => (
             <div key={prop} className="flex items-start gap-2">
               <svg
-                className="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
+                className="mt-0.5 h-4 w-4 shrink-0 text-accent"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -248,11 +248,11 @@ export default function AuditResultCard({
                   d="M4.5 12.75l6 6 9-13.5"
                 />
               </svg>
-              <span className="text-sm text-gray-700">{prop}</span>
+              <span className="text-sm text-foreground/80">{prop}</span>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-xs text-gray-500">
+        <p className="mt-3 text-xs text-text-muted">
           Businesses that address these issues typically see significantly more inbound leads.
         </p>
       </div>
@@ -260,7 +260,7 @@ export default function AuditResultCard({
       {onGenerateClick && (
         <button
           onClick={onGenerateClick}
-          className="mt-4 w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          className="mt-4 w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
         >
           Fix These Issues &rarr; Generate My Website
         </button>

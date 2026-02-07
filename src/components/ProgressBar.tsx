@@ -25,17 +25,17 @@ export default function ProgressBar({ currentStage, stages, timeEstimate }: Prog
                 {index > 0 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? "bg-blue-600" : "bg-gray-200"
+                      isCompleted ? "bg-accent" : "bg-border-subtle"
                     }`}
                   />
                 )}
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-medium ${
                     isCompleted
-                      ? "bg-blue-600 text-white"
+                      ? "bg-accent text-white"
                       : isActive
-                        ? "border-2 border-blue-600 bg-white text-blue-600"
-                        : "border-2 border-gray-200 bg-white text-gray-400"
+                        ? "border-2 border-accent bg-white text-accent"
+                        : "border-2 border-border-subtle bg-white text-text-muted"
                   }`}
                 >
                   {isCompleted ? (
@@ -49,7 +49,7 @@ export default function ProgressBar({ currentStage, stages, timeEstimate }: Prog
                 {index < stages.length - 1 && (
                   <div
                     className={`h-0.5 flex-1 ${
-                      isCompleted ? "bg-blue-600" : "bg-gray-200"
+                      isCompleted ? "bg-accent" : "bg-border-subtle"
                     }`}
                   />
                 )}
@@ -57,18 +57,14 @@ export default function ProgressBar({ currentStage, stages, timeEstimate }: Prog
               <div className="mt-2 text-center">
                 <p
                   className={`text-xs font-medium ${
-                    isCompleted
-                      ? "text-blue-600"
-                      : isActive
-                        ? "text-blue-600"
-                        : "text-gray-400"
+                    isCompleted || isActive ? "text-accent" : "text-text-muted"
                   }`}
                 >
                   {stage.label}
                 </p>
                 <p
                   className={`mt-0.5 text-xs ${
-                    isActive ? "text-gray-500" : isCompleted ? "text-gray-500" : "text-gray-300"
+                    isActive || isCompleted ? "text-text-muted" : "text-text-light"
                   }`}
                 >
                   <span className="sm:hidden">
@@ -84,7 +80,7 @@ export default function ProgressBar({ currentStage, stages, timeEstimate }: Prog
         })}
       </div>
       {timeEstimate && (
-        <p className="mt-3 text-center text-xs text-gray-400">{timeEstimate}</p>
+        <p className="mt-3 text-center text-xs text-text-muted">{timeEstimate}</p>
       )}
     </div>
   );

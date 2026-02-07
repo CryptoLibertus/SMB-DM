@@ -20,7 +20,7 @@ interface AiAnalysis {
 const SEVERITY_DOT: Record<Finding["severity"], string> = {
   critical: "bg-red-500",
   warning: "bg-yellow-500",
-  info: "bg-blue-400",
+  info: "bg-accent/60",
 };
 
 const GRADE_COLORS: Record<string, string> = {
@@ -33,7 +33,7 @@ const GRADE_COLORS: Record<string, string> = {
 
 function getGradeColor(grade: string): string {
   const letter = grade.charAt(0).toUpperCase();
-  return GRADE_COLORS[letter] || "bg-gray-500";
+  return GRADE_COLORS[letter] || "bg-text-muted";
 }
 
 const CATEGORIES = [
@@ -95,10 +95,10 @@ export default function AiAnalysisCard({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-border-subtle bg-white shadow-sm">
       {/* Header row: title + grade badge */}
       <div className="flex items-center justify-between px-6 py-4">
-        <h3 className="text-lg font-semibold text-gray-900">AI Analysis</h3>
+        <h3 className="text-lg font-semibold text-foreground">AI Analysis</h3>
         <div
           className={`flex h-12 w-12 items-center justify-center rounded-full ${getGradeColor(analysis.overallGrade)} text-lg font-bold text-white`}
         >
@@ -106,30 +106,30 @@ export default function AiAnalysisCard({
         </div>
       </div>
 
-      {/* Summary — short text */}
-      <div className="border-t border-gray-100 px-6 py-3">
-        <p className="text-sm text-gray-600">{analysis.summary}</p>
+      {/* Summary */}
+      <div className="border-t border-border-subtle/50 px-6 py-3">
+        <p className="text-sm text-text-muted">{analysis.summary}</p>
       </div>
 
-      {/* Top Priorities — hero content */}
-      <div className="border-t border-gray-100 px-6 py-4">
-        <h4 className="mb-2 text-sm font-semibold text-gray-900">
+      {/* Top Priorities */}
+      <div className="border-t border-border-subtle/50 px-6 py-4">
+        <h4 className="mb-2 text-sm font-semibold text-foreground">
           Top Priorities
         </h4>
         <ol className="space-y-1">
           {analysis.topPriorities.map((priority, i) => (
             <li key={i} className="flex gap-2 text-sm">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-700">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-semibold text-accent">
                 {i + 1}
               </span>
-              <span className="font-medium text-gray-800">{priority}</span>
+              <span className="font-medium text-foreground/80">{priority}</span>
             </li>
           ))}
         </ol>
       </div>
 
-      {/* Findings by category — collapsible, bullet-only */}
-      <div className="border-t border-gray-100">
+      {/* Findings by category */}
+      <div className="border-t border-border-subtle/50">
         {CATEGORIES.map((category) => {
           const findings = findingsByCategory.get(category) || [];
           if (findings.length === 0) return null;
@@ -137,17 +137,17 @@ export default function AiAnalysisCard({
           const isExpanded = expandedCategories.has(category);
 
           return (
-            <div key={category} className="border-b border-gray-50 last:border-b-0">
+            <div key={category} className="border-b border-border-subtle/30 last:border-b-0">
               <button
                 onClick={() => toggleCategory(category)}
-                className="flex w-full items-center justify-between px-6 py-2.5 text-left hover:bg-gray-50"
+                className="flex w-full items-center justify-between px-6 py-2.5 text-left transition-colors hover:bg-background"
               >
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-foreground/80">
                   {category}{" "}
-                  <span className="text-gray-400">({findings.length})</span>
+                  <span className="text-text-muted">({findings.length})</span>
                 </span>
                 <svg
-                  className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -173,16 +173,16 @@ export default function AiAnalysisCard({
                           <span
                             className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${SEVERITY_DOT[finding.severity]}`}
                           />
-                          <span className="text-sm font-medium text-gray-800">
+                          <span className="text-sm font-medium text-foreground/80">
                             {finding.title}
                           </span>
                         </button>
                         {isDetailExpanded && (
-                          <div className="ml-4 mt-1 mb-2 rounded border-l-2 border-gray-200 pl-3">
-                            <p className="text-xs leading-relaxed text-gray-600">
+                          <div className="ml-4 mt-1 mb-2 rounded border-l-2 border-border-subtle pl-3">
+                            <p className="text-xs leading-relaxed text-text-muted">
                               {finding.detail}
                             </p>
-                            <p className="mt-1 text-xs text-blue-700">
+                            <p className="mt-1 text-xs text-accent">
                               <span className="font-medium">Fix:</span>{" "}
                               {finding.recommendation}
                             </p>
