@@ -30,9 +30,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error("Checkout error:", errMsg);
     const { message, status } = handleApiError(err);
-    return NextResponse.json(error(`${message}: ${errMsg}`), { status });
+    return NextResponse.json(error(message), { status });
   }
 }
