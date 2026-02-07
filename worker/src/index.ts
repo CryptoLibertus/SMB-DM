@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import healthRouter from "./routes/health.js";
 import generateRouter from "./routes/generate.js";
+import auditAnalyzeRouter from "./routes/audit-analyze.js";
 
 const app = express();
 const port = parseInt(process.env.PORT || "8080", 10);
@@ -12,6 +13,7 @@ app.use(express.json({ limit: "10mb" }));
 // Routes
 app.use(healthRouter);
 app.use(generateRouter);
+app.use(auditAnalyzeRouter);
 
 // Global error handler
 app.use(

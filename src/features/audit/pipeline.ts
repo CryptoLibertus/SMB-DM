@@ -10,6 +10,7 @@ import {
   analyzeDns,
 } from "./analyzers";
 import type { AuditStageEvent, AuditPipelineResult } from "./types";
+import { triggerWorkerAuditAnalysis } from "./worker-client";
 
 const TOTAL_STAGES = 4;
 
@@ -160,8 +161,27 @@ export async function runAuditPipeline(
 
   await db
     .update(auditResults)
-    .set({ dnsInfo: dns, completedStage: 4 })
+    .set({ dnsInfo: dns, completedStage: 4, aiAnalysisStatus: "pending" })
     .where(eq(auditResults.id, auditId));
+
+  // Trigger Phase 2 AI analysis on the Fly.io worker (fire-and-forget)
+  triggerWorkerAuditAnalysis({
+    auditId,
+    targetUrl,
+    basicAuditData: {
+      seoScore: seo.seoScore,
+      mobileScore: mobile.mobileScore,
+      ctaAnalysis: cta,
+      metaTags: seo.metaTags,
+      analyticsDetected: analytics,
+      dnsInfo: dns,
+    },
+  }).catch((err) => {
+    console.error(
+      `[audit] Failed to trigger AI audit analysis for ${auditId}:`,
+      err
+    );
+  });
 
   // ── Complete ──────────────────────────────────────────────────────────
   const finalResults: AuditPipelineResult = {

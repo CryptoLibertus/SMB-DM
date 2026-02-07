@@ -236,6 +236,21 @@ export const auditResults = pgTable("audit_results", {
   completedStage: integer("completed_stage").notNull().default(0),
   screenshotDesktop: text("screenshot_desktop"),
   screenshotMobile: text("screenshot_mobile"),
+  aiAnalysis: jsonb("ai_analysis").$type<{
+    summary: string;
+    overallGrade: string;
+    findings: {
+      category: string;
+      severity: "critical" | "warning" | "info";
+      title: string;
+      detail: string;
+      recommendation: string;
+    }[];
+    topPriorities: string[];
+  }>(),
+  aiAnalysisStatus: text("ai_analysis_status").$type<
+    "pending" | "analyzing" | "complete" | "failed"
+  >(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
+import AiAnalysisCard from "@/components/AiAnalysisCard";
 import FloatingCTA from "@/components/FloatingCTA";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
 import { useParams, useRouter } from "next/navigation";
@@ -45,6 +46,7 @@ interface SitePreview {
 type Phase = "auditing" | "audit_done" | "generating" | "version_ready" | "error";
 
 const POLL_INTERVAL_MS = 2_000;
+const AI_POLL_INTERVAL_MS = 3_000;
 const MIN_AUDIT_DISPLAY_MS = 4_000; // show progress bar for at least 4s
 
 const SUBSCRIPTION_INCLUDES = [
@@ -68,6 +70,19 @@ export default function DemoPage() {
   const [sitePreview, setSitePreview] = useState<SitePreview | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    summary: string;
+    overallGrade: string;
+    findings: {
+      category: string;
+      severity: "critical" | "warning" | "info";
+      title: string;
+      detail: string;
+      recommendation: string;
+    }[];
+    topPriorities: string[];
+  } | null>(null);
+  const [aiAnalysisStatus, setAiAnalysisStatus] = useState<string | null>(null);
 
   // ── Scroll to business form ─────────────────────────────────────────────
   const scrollToForm = useCallback(() => {
@@ -78,6 +93,7 @@ export default function DemoPage() {
   useEffect(() => {
     let cancelled = false;
     const mountedAt = Date.now();
+    let basicAuditDone = false;
 
     async function poll() {
       while (!cancelled) {
@@ -116,49 +132,71 @@ export default function DemoPage() {
             });
           }
 
+          // Track AI analysis status
+          if (data.aiAnalysisStatus) {
+            setAiAnalysisStatus(data.aiAnalysisStatus);
+          }
+          if (data.aiAnalysis) {
+            setAiAnalysis(data.aiAnalysis);
+          }
+
           if (data.isComplete) {
-            // Ensure the progress bar is visible for a minimum duration
-            // so fast audits don't look like nothing happened.
-            const elapsed = Date.now() - mountedAt;
-            if (elapsed < MIN_AUDIT_DISPLAY_MS) {
-              // Animate through remaining stages before transitioning
-              const remaining = MIN_AUDIT_DISPLAY_MS - elapsed;
-              const stageDelay = remaining / AUDIT_STAGES.length;
-              for (let i = 0; i <= AUDIT_STAGES.length && !cancelled; i++) {
-                setAuditStage(i);
-                await new Promise((r) => setTimeout(r, stageDelay));
-              }
-            }
-
-            if (cancelled) return;
-
-            if (data.generation) {
-              const gen = data.generation;
-              setGenerationId(gen.generationId);
-              const v = gen.versions[0];
-              if (v) {
-                setSitePreview({
-                  id: v.id,
-                  previewUrl: v.previewUrl || "about:blank",
-                  status: v.status,
-                });
+            // Phase transition only on first time seeing isComplete
+            if (!basicAuditDone) {
+              // Ensure the progress bar is visible for a minimum duration
+              // so fast audits don't look like nothing happened.
+              const elapsed = Date.now() - mountedAt;
+              if (elapsed < MIN_AUDIT_DISPLAY_MS) {
+                // Animate through remaining stages before transitioning
+                const remaining = MIN_AUDIT_DISPLAY_MS - elapsed;
+                const stageDelay = remaining / AUDIT_STAGES.length;
+                for (let i = 0; i <= AUDIT_STAGES.length && !cancelled; i++) {
+                  setAuditStage(i);
+                  await new Promise((r) => setTimeout(r, stageDelay));
+                }
               }
 
-              if (gen.stage === "complete") {
-                setPhase("version_ready");
+              if (cancelled) return;
+
+              if (data.generation) {
+                const gen = data.generation;
+                setGenerationId(gen.generationId);
+                const v = gen.versions[0];
+                if (v) {
+                  setSitePreview({
+                    id: v.id,
+                    previewUrl: v.previewUrl || "about:blank",
+                    status: v.status,
+                  });
+                }
+
+                if (gen.stage === "complete") {
+                  setPhase("version_ready");
+                } else {
+                  setPhase("generating");
+                }
               } else {
-                setPhase("generating");
+                setPhase("audit_done");
               }
-            } else {
-              setPhase("audit_done");
+
+              basicAuditDone = true;
             }
-            return;
+
+            // Continue polling for AI analysis if it hasn't completed yet
+            const aiStatus = data.aiAnalysisStatus;
+            if (aiStatus === "pending" || aiStatus === "analyzing") {
+              // Keep polling at slower interval for AI analysis
+            } else {
+              return;
+            }
           }
         } catch {
           // Network error, keep trying
         }
 
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        await new Promise((r) =>
+          setTimeout(r, basicAuditDone ? AI_POLL_INTERVAL_MS : POLL_INTERVAL_MS)
+        );
       }
     }
 
@@ -361,6 +399,29 @@ export default function DemoPage() {
               analyticsDetected={auditResult.analyticsDetected}
               onGenerateClick={phase === "audit_done" ? scrollToForm : undefined}
             />
+          </div>
+        )}
+
+        {/* AI Analysis */}
+        {phase !== "auditing" && aiAnalysisStatus && !aiAnalysis && aiAnalysisStatus !== "failed" && (
+          <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6">
+            <div className="flex items-center gap-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">
+                  Running deep analysis...
+                </p>
+                <p className="text-xs text-gray-500">
+                  Our AI is reviewing your site content and CRO effectiveness
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {aiAnalysis && (
+          <div className="mb-8">
+            <AiAnalysisCard analysis={aiAnalysis} />
           </div>
         )}
 

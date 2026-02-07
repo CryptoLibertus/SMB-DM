@@ -105,6 +105,8 @@ export async function GET(
         screenshotMobile: row.screenshotMobile,
         targetUrl: row.targetUrl,
       },
+      aiAnalysis: row.aiAnalysis ?? null,
+      aiAnalysisStatus: row.aiAnalysisStatus ?? null,
       ...(generation ? { generation } : {}),
     })
   );
