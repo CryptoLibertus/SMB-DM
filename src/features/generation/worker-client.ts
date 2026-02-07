@@ -5,7 +5,7 @@ interface WorkerGenerateRequest {
   siteId: string;
   versions: {
     siteVersionId: string;
-    versionNumber: 1 | 2 | 3;
+    versionNumber: number;
     directive: {
       versionNumber: number;
       name: string;

@@ -100,6 +100,7 @@ export async function GET(
         metaTags: row.metaTags,
         analyticsDetected: row.analyticsDetected,
         dnsInfo: row.dnsInfo,
+        extractedImages: row.extractedImages,
         screenshotDesktop: row.screenshotDesktop,
         screenshotMobile: row.screenshotMobile,
         targetUrl: row.targetUrl,

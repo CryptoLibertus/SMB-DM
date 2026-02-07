@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
-import VersionSwitcher from "@/components/VersionSwitcher";
 import FloatingCTA from "@/components/FloatingCTA";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
 import { useParams, useRouter } from "next/navigation";
@@ -17,10 +16,8 @@ const AUDIT_STAGES = [
 ];
 
 const GENERATION_STAGES = [
-  { label: "Preparing", description: "Setting up generation" },
-  { label: "Version 1", description: "Modern & Bold" },
-  { label: "Version 2", description: "Clean & Professional" },
-  { label: "Version 3", description: "Warm & Friendly" },
+  { label: "Preparing", description: "Setting up your new site" },
+  { label: "Generating", description: "Building your custom website" },
 ];
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -30,21 +27,22 @@ interface AuditResult {
   ctaCount: number;
   hasAnalytics: boolean;
   targetUrl: string;
+  metaTags?: {
+    title: string | null;
+    description: string | null;
+    h1s: string[];
+    robots: string | null;
+  };
+  analyticsDetected?: { ga4: boolean; gtm: boolean; other: string[] };
 }
 
-interface Version {
+interface SitePreview {
   id: string;
-  versionNumber: number;
   previewUrl: string;
-  designMeta: {
-    colorPalette: string[];
-    layoutType: string;
-    typography: string;
-  };
   status: "generating" | "ready" | "failed";
 }
 
-type Phase = "auditing" | "audit_done" | "generating" | "versions_ready" | "error";
+type Phase = "auditing" | "audit_done" | "generating" | "version_ready" | "error";
 
 const POLL_INTERVAL_MS = 2_000;
 
@@ -58,8 +56,7 @@ export default function DemoPage() {
   const [auditStage, setAuditStage] = useState(0);
   const [genStage, setGenStage] = useState(0);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
-  const [versions, setVersions] = useState<Version[]>([]);
-  const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+  const [sitePreview, setSitePreview] = useState<SitePreview | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [generationId, setGenerationId] = useState<string | null>(null);
 
@@ -72,7 +69,6 @@ export default function DemoPage() {
         try {
           const res = await fetch(`/api/audit/${auditId}/status`);
           if (!res.ok) {
-            // Audit might not exist yet, keep polling
             await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
             continue;
           }
@@ -86,12 +82,10 @@ export default function DemoPage() {
 
           const data = json.data;
 
-          // Update stage number
           if (typeof data.stageNumber === "number") {
             setAuditStage(data.stageNumber);
           }
 
-          // Extract partial results
           if (data.auditResult) {
             const p = data.auditResult;
             setAuditResult({
@@ -102,29 +96,27 @@ export default function DemoPage() {
                 ? p.analyticsDetected.ga4 || p.analyticsDetected.gtm
                 : false,
               targetUrl: p.targetUrl ?? "",
+              metaTags: p.metaTags,
+              analyticsDetected: p.analyticsDetected,
             });
           }
 
-          // Check for completion
           if (data.isComplete) {
-            // Fast-forward: if generation data exists, skip to the right phase
             if (data.generation) {
               const gen = data.generation;
               setGenerationId(gen.generationId);
-              setVersions(
-                gen.versions.map((v: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: { colorPalette: string[]; layoutType: string; typography: string } | null }) => ({
+              const v = gen.versions[0];
+              if (v) {
+                setSitePreview({
                   id: v.id,
-                  versionNumber: v.versionNumber,
                   previewUrl: v.previewUrl || "about:blank",
-                  designMeta: v.designMeta || getDesignMeta(v.versionNumber),
                   status: v.status,
-                }))
-              );
+                });
+              }
 
               if (gen.stage === "complete") {
-                setPhase("versions_ready");
+                setPhase("version_ready");
               } else {
-                // Still generating — start generation polling
                 setPhase("generating");
               }
             } else {
@@ -170,29 +162,26 @@ export default function DemoPage() {
 
           const data = json.data;
 
-          // Update versions from DB state
           if (data.versions && data.versions.length > 0) {
-            setVersions(
-              data.versions.map((v: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: { colorPalette: string[]; layoutType: string; typography: string } | null }) => ({
-                id: v.id,
-                versionNumber: v.versionNumber,
-                previewUrl: v.previewUrl || "about:blank",
-                designMeta: v.designMeta || getDesignMeta(v.versionNumber),
-                status: v.status,
-              }))
-            );
+            const v = data.versions[0];
+            setSitePreview({
+              id: v.id,
+              previewUrl: v.previewUrl || "about:blank",
+              status: v.status,
+            });
 
-            // Update gen stage based on ready count
-            const readyCount = data.versions.filter((v: { status: string }) => v.status === "ready").length;
-            setGenStage(Math.min(readyCount + 1, 3));
+            if (v.status === "ready") {
+              setGenStage(2);
+            } else {
+              setGenStage(1);
+            }
           }
 
-          // Check for completion
           if (data.isComplete) {
             if (data.stage === "complete") {
-              setPhase("versions_ready");
+              setPhase("version_ready");
             } else {
-              setErrorMessage("All versions failed to generate");
+              setErrorMessage("Failed to generate your website");
               setPhase("error");
             }
             return;
@@ -223,13 +212,7 @@ export default function DemoPage() {
     }) => {
       setPhase("generating");
       setErrorMessage(null);
-
-      // Initialize version placeholders
-      setVersions([
-        { id: "v1", versionNumber: 1, previewUrl: "about:blank", designMeta: getDesignMeta(1), status: "generating" },
-        { id: "v2", versionNumber: 2, previewUrl: "about:blank", designMeta: getDesignMeta(2), status: "generating" },
-        { id: "v3", versionNumber: 3, previewUrl: "about:blank", designMeta: getDesignMeta(3), status: "generating" },
-      ]);
+      setSitePreview({ id: "pending", previewUrl: "about:blank", status: "generating" });
 
       try {
         const res = await fetch("/api/generate", {
@@ -265,14 +248,12 @@ export default function DemoPage() {
     [auditId]
   );
 
-  // ── Choose version → checkout ──────────────────────────────────────────
-  const handlePickVersion = () => {
-    if (selectedVersion) {
-      router.push(`/checkout?auditId=${auditId}&version=${selectedVersion}`);
+  // ── Go live → checkout ──────────────────────────────────────────────
+  const handleGoLive = () => {
+    if (sitePreview) {
+      router.push(`/checkout?auditId=${auditId}&version=${sitePreview.id}`);
     }
   };
-
-  const selectedVersionData = versions.find((v) => v.id === selectedVersion);
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
@@ -284,20 +265,20 @@ export default function DemoPage() {
             {phase === "auditing" || phase === "audit_done"
               ? "Analyzing Your Website"
               : phase === "generating"
-                ? "Generating Your New Websites"
-                : phase === "versions_ready"
-                  ? "Your New Website Options"
+                ? "Building Your New Website"
+                : phase === "version_ready"
+                  ? "Your New Website Is Ready"
                   : "Website Refresh"}
           </h1>
           <p className="mt-2 text-gray-500">
             {phase === "auditing"
               ? "We're crawling your site and running a full audit..."
               : phase === "audit_done"
-                ? "Audit complete! Tell us about your business to generate your new sites."
+                ? "Audit complete! Tell us about your business to generate your new site."
                 : phase === "generating"
-                  ? "Creating 3 unique designs tailored to your business..."
-                  : phase === "versions_ready"
-                    ? "Pick your favorite design and go live in minutes."
+                  ? "Creating a custom design tailored to your business..."
+                  : phase === "version_ready"
+                    ? "Preview your new site and go live in minutes."
                     : ""}
           </p>
         </div>
@@ -324,7 +305,7 @@ export default function DemoPage() {
           </div>
         )}
 
-        {/* Audit results (shown once available, persists through all later phases) */}
+        {/* Audit results */}
         {auditResult && auditResult.seoScore > 0 && (
           <div className="mb-8">
             <AuditResultCard
@@ -333,11 +314,13 @@ export default function DemoPage() {
               ctaCount={auditResult.ctaCount}
               hasAnalytics={auditResult.hasAnalytics}
               targetUrl={auditResult.targetUrl}
+              metaTags={auditResult.metaTags}
+              analyticsDetected={auditResult.analyticsDetected}
             />
           </div>
         )}
 
-        {/* Business info form (shown after audit completes) */}
+        {/* Business info form */}
         {phase === "audit_done" && (
           <div className="mb-8">
             <BusinessInfoForm onSubmit={handleBusinessInfoSubmit} />
@@ -351,53 +334,38 @@ export default function DemoPage() {
           </div>
         )}
 
-        {/* Version switcher */}
-        {(phase === "generating" || phase === "versions_ready") &&
-          versions.length > 0 && (
-            <div className="mb-8">
-              <VersionSwitcher
-                versions={versions}
-                selectedVersion={selectedVersion}
-                onSelect={setSelectedVersion}
-              />
+        {/* Site preview */}
+        {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
+          <div className="mb-8">
+            <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex flex-col items-center gap-3 bg-white px-4 py-8">
+                <a
+                  href={sitePreview.previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Open Preview in New Tab
+                </a>
+                <span className="max-w-full truncate text-xs text-gray-400">
+                  {sitePreview.previewUrl}
+                </span>
+              </div>
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       {/* Floating CTA */}
-      {phase === "versions_ready" && (
+      {phase === "version_ready" && sitePreview && sitePreview.status === "ready" && (
         <FloatingCTA
-          versionLabel={
-            selectedVersionData
-              ? `Version ${selectedVersionData.versionNumber}`
-              : undefined
-          }
-          onClick={handlePickVersion}
-          disabled={!selectedVersion}
+          onClick={handleGoLive}
+          disabled={false}
         />
       )}
     </div>
   );
-}
-
-// ── Helper: default design meta per version number ──────────────────────────
-function getDesignMeta(versionNumber: number) {
-  const directives = [
-    {
-      colorPalette: ["#0F172A", "#3B82F6", "#F8FAFC", "#EAB308", "#1E293B"],
-      layoutType: "Modern & Bold",
-      typography: "Inter",
-    },
-    {
-      colorPalette: ["#FFFFFF", "#1E3A5F", "#F1F5F9", "#0EA5E9", "#334155"],
-      layoutType: "Clean & Professional",
-      typography: "Source Sans Pro",
-    },
-    {
-      colorPalette: ["#FFF7ED", "#EA580C", "#FAFAF9", "#16A34A", "#78350F"],
-      layoutType: "Warm & Friendly",
-      typography: "Nunito",
-    },
-  ];
-  return directives[versionNumber - 1] || directives[0];
 }

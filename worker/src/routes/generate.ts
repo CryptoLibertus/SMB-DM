@@ -7,7 +7,7 @@ import type { GenerateRequest } from "../types/api.js";
 const router = Router();
 
 const directiveSchema = z.object({
-  versionNumber: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  versionNumber: z.number().min(1).max(1),
   name: z.string(),
   description: z.string(),
   colorPalette: z.array(z.string()),
@@ -22,12 +22,12 @@ const generateRequestSchema = z.object({
     .array(
       z.object({
         siteVersionId: z.string().uuid(),
-        versionNumber: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+        versionNumber: z.number().min(1).max(1),
         directive: directiveSchema,
       })
     )
     .min(1)
-    .max(3),
+    .max(1),
   businessContext: z.object({
     businessName: z.string(),
     industry: z.string(),
@@ -74,6 +74,20 @@ const generateRequestSchema = z.object({
       }),
       screenshotDesktop: z.string().nullable(),
       screenshotMobile: z.string().nullable(),
+      extractedImages: z
+        .object({
+          images: z.array(
+            z.object({
+              src: z.string(),
+              alt: z.string().nullable(),
+              width: z.number().nullable(),
+              height: z.number().nullable(),
+              context: z.enum(["img_tag", "css_background", "og_image"]),
+            })
+          ),
+        })
+        .optional()
+        .default({ images: [] }),
     })
     .nullable(),
 });

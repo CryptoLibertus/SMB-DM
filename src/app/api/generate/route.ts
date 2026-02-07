@@ -89,27 +89,23 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    // 4. Create 3 SiteVersion records
-    const versionRecords = await Promise.all(
-      DESIGN_DIRECTIVES.map((directive) =>
-        db
-          .insert(siteVersions)
-          .values({
-            siteId: site.id,
-            versionNumber: directive.versionNumber,
-            generatedCodeRef: "",
-            previewUrl: "",
-            designMeta: {
-              colorPalette: directive.colorPalette,
-              layoutType: directive.layoutType,
-              typography: directive.typography,
-            },
-            status: "generating",
-          })
-          .returning()
-          .then((rows) => rows[0])
-      )
-    );
+    // 4. Create 1 SiteVersion record
+    const directive = DESIGN_DIRECTIVES[0];
+    const [versionRecord] = await db
+      .insert(siteVersions)
+      .values({
+        siteId: site.id,
+        versionNumber: directive.versionNumber,
+        generatedCodeRef: "",
+        previewUrl: "",
+        designMeta: {
+          colorPalette: directive.colorPalette,
+          layoutType: directive.layoutType,
+          typography: directive.typography,
+        },
+        status: "generating",
+      })
+      .returning();
 
     // 5. Build audit data for worker
     const auditData: AuditPipelineResult = {
@@ -119,6 +115,7 @@ export async function POST(req: NextRequest) {
       metaTags: auditResult.metaTags,
       analyticsDetected: auditResult.analyticsDetected,
       dnsInfo: auditResult.dnsInfo,
+      extractedImages: auditResult.extractedImages as AuditPipelineResult["extractedImages"],
       screenshotDesktop: auditResult.screenshotDesktop,
       screenshotMobile: auditResult.screenshotMobile,
     };
@@ -128,25 +125,23 @@ export async function POST(req: NextRequest) {
       await triggerWorkerGeneration({
         generationId,
         siteId: site.id,
-        versions: DESIGN_DIRECTIVES.map((directive, index) => ({
-          siteVersionId: versionRecords[index].id,
-          versionNumber: directive.versionNumber,
-          directive,
-        })),
+        versions: [
+          {
+            siteVersionId: versionRecord.id,
+            versionNumber: directive.versionNumber,
+            directive,
+          },
+        ],
         businessContext: parsed.businessContext,
         auditData,
       });
     } catch (workerErr) {
       console.error("Failed to trigger worker:", workerErr);
-      // Mark all versions as failed if worker is unreachable
-      await Promise.all(
-        versionRecords.map((v) =>
-          db
-            .update(siteVersions)
-            .set({ status: "failed" })
-            .where(eq(siteVersions.id, v.id))
-        )
-      );
+      // Mark version as failed if worker is unreachable
+      await db
+        .update(siteVersions)
+        .set({ status: "failed" })
+        .where(eq(siteVersions.id, versionRecord.id));
       return NextResponse.json(
         error("Generation service unavailable. Please try again later."),
         { status: 503 }

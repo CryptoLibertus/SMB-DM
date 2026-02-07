@@ -221,6 +221,18 @@ export const auditResults = pgTable("audit_results", {
     }>()
     .notNull()
     .default({ registrar: null, nameservers: [], switchable: false }),
+  extractedImages: jsonb("extracted_images")
+    .$type<{
+      images: {
+        src: string;
+        alt: string | null;
+        width: number | null;
+        height: number | null;
+        context: "img_tag" | "css_background" | "og_image";
+      }[];
+    }>()
+    .notNull()
+    .default({ images: [] }),
   completedStage: integer("completed_stage").notNull().default(0),
   screenshotDesktop: text("screenshot_desktop"),
   screenshotMobile: text("screenshot_mobile"),

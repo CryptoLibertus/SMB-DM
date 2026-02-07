@@ -11,7 +11,7 @@ export interface BusinessContext {
 }
 
 export interface DesignDirective {
-  versionNumber: 1 | 2 | 3;
+  versionNumber: number;
   name: string;
   description: string;
   colorPalette: string[];
@@ -22,38 +22,18 @@ export interface DesignDirective {
 export const DESIGN_DIRECTIVES: DesignDirective[] = [
   {
     versionNumber: 1,
-    name: "Modern & Bold",
+    name: "Conversion-Optimized",
     description:
-      "Dark hero section, large typography, strong CTAs, high contrast, bold gradients",
+      "A professional, conversion-focused design tailored to the business's industry. Choose a color scheme, typography, and layout that best fits the brand. Prioritize clear CTAs, trust signals, and mobile responsiveness.",
     colorPalette: ["#0F172A", "#3B82F6", "#F8FAFC", "#EAB308", "#1E293B"],
-    layoutType: "bold-hero",
-    typography: "Inter / bold weights",
-  },
-  {
-    versionNumber: 2,
-    name: "Clean & Professional",
-    description:
-      "White space, subtle colors, corporate feel, structured grid layout, refined typography",
-    colorPalette: ["#FFFFFF", "#1E3A5F", "#F1F5F9", "#0EA5E9", "#334155"],
-    layoutType: "corporate-grid",
-    typography: "Source Sans Pro / regular weights",
-  },
-  {
-    versionNumber: 3,
-    name: "Warm & Friendly",
-    description:
-      "Rounded corners, warm palette, approachable tone, friendly illustrations, soft shadows",
-    colorPalette: ["#FFF7ED", "#EA580C", "#FAFAF9", "#16A34A", "#78350F"],
-    layoutType: "friendly-rounded",
-    typography: "Nunito / medium weights",
+    layoutType: "conversion-optimized",
+    typography: "Inter / system fonts",
   },
 ];
 
 export type GenerationStage =
   | "initializing"
-  | "generating_v1"
-  | "generating_v2"
-  | "generating_v3"
+  | "generating"
   | "storing"
   | "complete"
   | "error";

@@ -6,8 +6,8 @@ import Link from "next/link";
 
 const FEATURES = [
   {
-    title: "AI-Powered Redesign",
-    description: "3 unique, conversion-optimized versions of your website generated in minutes.",
+    title: "Professional Redesign",
+    description: "Not a template. AI builds a custom site for your business, ready in minutes — not weeks.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -15,8 +15,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "SEO Blog Content",
-    description: "2 industry-relevant blog posts per week, automatically published to your site.",
+    title: "Fresh Blog Content",
+    description: "2 SEO-optimized posts per week, written and published automatically. Rank higher without lifting a finger.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
@@ -24,8 +24,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Analytics Dashboard",
-    description: "See traffic, leads, and top pages at a glance. No setup required.",
+    title: "Know Your Numbers",
+    description: "See who visits your site, where they come from, and which pages convert — all in one dashboard.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -33,8 +33,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Email Reports",
-    description: "Weekly and monthly performance summaries delivered to your inbox.",
+    title: "Weekly Performance Reports",
+    description: "Traffic, leads, and top pages delivered to your inbox every week. Stay informed without logging in.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -42,8 +42,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "Change Requests",
-    description: "Need an update? Email us or use the dashboard. 5 requests included monthly.",
+    title: "On-Demand Updates",
+    description: "Need a change? Email us or use the dashboard. 5 requests per month included — no extra charge.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -52,7 +52,7 @@ const FEATURES = [
   },
   {
     title: "Custom Domain + SSL",
-    description: "Your site, your domain. Free SSL certificate included and auto-renewed.",
+    description: "Your site, your domain. Free SSL certificate included and auto-renewed. Live in minutes.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
@@ -69,25 +69,33 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "Pick your favorite",
-    description: "Review 3 AI-generated redesigns. Each one is unique, responsive, and optimized.",
+    title: "Review your new site",
+    description: "Get a custom AI-generated redesign optimized for your industry and audience.",
   },
   {
     number: "03",
     title: "Go live in minutes",
-    description: "Subscribe, point your domain, and your new site is live. We handle everything else.",
+    description: "Subscribe, point your domain, and your new site is live — with hosting, blog content, and analytics included.",
   },
 ];
 
 const PLAN_FEATURES = [
-  "AI-powered website redesign (3 versions)",
+  "AI-powered website redesign",
   "Custom domain with free SSL",
   "2 SEO blog posts per week",
   "Analytics dashboard",
   "Weekly & monthly email reports",
   "5 change requests per month",
   "99.9% uptime guarantee",
+  "30-day money-back guarantee",
   "Cancel anytime",
+];
+
+const TRUST_SIGNALS = [
+  "Cancel anytime",
+  "No contracts",
+  "Live in minutes",
+  "30-day money-back guarantee",
 ];
 
 export default function Home() {
@@ -161,15 +169,15 @@ export default function Home() {
           </p>
 
           <h1 className="animate-float-up-delay-1 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-            Your website is losing
+            Stop losing customers
             <br />
-            you customers.{" "}
-            <span className="text-accent">We&apos;ll fix it.</span>
+            to a{" "}
+            <span className="text-accent">bad website.</span>
           </h1>
 
           <p className="animate-float-up-delay-2 mx-auto mt-6 max-w-xl text-lg font-light leading-relaxed text-text-light sm:text-xl">
-            Enter your URL. Get 3 AI-generated redesigns in under 5 minutes.
-            Go live with better SEO, fresh content, and real analytics.
+            Enter your URL below for a free website audit. We&apos;ll show you
+            exactly what&apos;s wrong and build you something better.
           </p>
 
           {/* URL Input — the centerpiece */}
@@ -197,7 +205,7 @@ export default function Home() {
               disabled={submitting}
               className="h-14 shrink-0 rounded-xl bg-accent px-8 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed sm:h-16 sm:rounded-l-none sm:text-lg"
             >
-              {submitting ? "Starting audit..." : "See Your Free Redesign"}
+              {submitting ? "Starting audit..." : "Audit My Website Free"}
             </button>
           </form>
 
@@ -206,34 +214,34 @@ export default function Home() {
           )}
 
           <p className="animate-float-up-delay-4 mt-4 text-xs text-text-muted">
-            No credit card required. Results in under 5 minutes.
+            Free audit in 60 seconds. No credit card required.
           </p>
         </div>
       </section>
 
-      {/* ─── SOCIAL PROOF BAR ─── */}
+      {/* ─── TRUST SIGNALS BAR ─── */}
       <section className="border-b border-border-subtle bg-white py-8">
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-4 px-6 sm:flex-row sm:justify-center sm:gap-6">
-          <p className="text-sm font-medium tracking-wide text-text-muted uppercase">
-            Trusted by 200+ small businesses
-          </p>
-          <div className="flex -space-x-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white text-xs font-bold"
-                style={{
-                  backgroundColor: [
-                    "#3B5BFE", "#10B981", "#F59E0B", "#EF4444",
-                    "#8B5CF6", "#EC4899", "#06B6D4", "#84CC16",
-                  ][i],
-                  color: "white",
-                }}
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6">
+          {TRUST_SIGNALS.map((signal) => (
+            <div key={signal} className="flex items-center gap-2">
+              <svg
+                className="h-4 w-4 shrink-0 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
               >
-                {["JM", "SK", "AL", "RB", "TP", "DC", "WH", "NV"][i]}
-              </div>
-            ))}
-          </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 12.75l6 6 9-13.5"
+                />
+              </svg>
+              <span className="text-sm font-medium text-gray-600">
+                {signal}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -310,6 +318,9 @@ export default function Home() {
             <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
               Everything you need to grow
             </h2>
+            <p className="mt-3 text-sm text-text-muted">
+              Less than a freelance developer charges for a single page.
+            </p>
           </div>
 
           <div className="rounded-2xl border-2 border-accent/20 bg-white p-8 shadow-lg shadow-accent/5 sm:p-10">
@@ -352,7 +363,7 @@ export default function Home() {
               }}
               className="w-full rounded-xl bg-accent py-4 text-base font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
             >
-              Get Started Free
+              Start My Free Audit
             </button>
 
             <p className="mt-4 text-center text-xs text-text-muted">

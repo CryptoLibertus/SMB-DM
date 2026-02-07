@@ -9,7 +9,7 @@ export interface BusinessContext {
 }
 
 export interface DesignDirective {
-  versionNumber: 1 | 2 | 3;
+  versionNumber: number;
   name: string;
   description: string;
   colorPalette: string[];

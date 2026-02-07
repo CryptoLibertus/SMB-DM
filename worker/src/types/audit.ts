@@ -27,6 +27,14 @@ export interface DnsAnalysis {
   switchable: boolean;
 }
 
+export interface ExtractedImage {
+  src: string;
+  alt: string | null;
+  width: number | null;
+  height: number | null;
+  context: "img_tag" | "css_background" | "og_image";
+}
+
 export interface AuditPipelineResult {
   seoScore: number;
   mobileScore: number;
@@ -34,6 +42,7 @@ export interface AuditPipelineResult {
   metaTags: SeoMetaTags;
   analyticsDetected: AnalyticsAnalysis;
   dnsInfo: DnsAnalysis;
+  extractedImages?: { images: ExtractedImage[] };
   screenshotDesktop: string | null;
   screenshotMobile: string | null;
 }

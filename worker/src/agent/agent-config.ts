@@ -40,6 +40,22 @@ Typography: ${directive.typography}`;
 - Analytics: GA4=${auditData.analyticsDetected.ga4}, GTM=${auditData.analyticsDetected.gtm}
 
 Use this data to improve upon the existing site. Address the weaknesses found (missing meta tags, low SEO score, missing CTAs).`;
+
+    // Add extracted images if available
+    const images = auditData.extractedImages?.images ?? [];
+    if (images.length > 0) {
+      const imageList = images.slice(0, 20).map((img) => {
+        let desc = `- ${img.src}`;
+        if (img.alt) desc += ` (alt: "${img.alt}")`;
+        desc += ` [${img.context}]`;
+        return desc;
+      }).join("\n");
+      prompt += `
+
+## Extracted Images from Current Site
+Use these client images where they fit the content. For hero backgrounds, section visuals, and any gaps, use high-quality royalty-free images from Unsplash (source.unsplash.com) or Pexels.
+${imageList}`;
+    }
   }
 
   prompt += `

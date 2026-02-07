@@ -6,56 +6,165 @@ interface AuditResultCardProps {
   ctaCount: number;
   hasAnalytics: boolean;
   targetUrl: string;
+  metaTags?: {
+    title: string | null;
+    description: string | null;
+    h1s: string[];
+    robots: string | null;
+  };
+  analyticsDetected?: { ga4: boolean; gtm: boolean; other: string[] };
 }
 
-function ScoreCircle({
-  score,
-  label,
-}: {
-  score: number;
-  label: string;
-}) {
-  const radius = 36;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const color =
-    score >= 80 ? "text-green-500" : score >= 50 ? "text-yellow-500" : "text-red-500";
-  const strokeColor =
-    score >= 80 ? "#22c55e" : score >= 50 ? "#eab308" : "#ef4444";
+function getSeverity(score: number): "red" | "yellow" | "green" {
+  if (score >= 80) return "green";
+  if (score >= 50) return "yellow";
+  return "red";
+}
 
+const severityStyles = {
+  red: "border-red-400 bg-red-50",
+  yellow: "border-yellow-400 bg-yellow-50",
+  green: "border-green-400 bg-green-50",
+} as const;
+
+const severityBadge = {
+  red: "bg-red-100 text-red-700",
+  yellow: "bg-yellow-100 text-yellow-700",
+  green: "bg-green-100 text-green-700",
+} as const;
+
+function buildSeoInsight(
+  score: number,
+  metaTags?: AuditResultCardProps["metaTags"]
+) {
+  const issues: string[] = [];
+  if (metaTags) {
+    if (!metaTags.title) issues.push("missing page title");
+    if (!metaTags.description) issues.push("no meta description");
+    if (metaTags.h1s.length === 0) issues.push("no H1 heading");
+    if (metaTags.h1s.length > 1)
+      issues.push(`${metaTags.h1s.length} competing H1 tags`);
+  }
+  if (score < 50 && issues.length === 0)
+    issues.push("weak keyword optimization");
+
+  const diagnosis =
+    issues.length > 0
+      ? `Found: ${issues.join(", ")}`
+      : "Basic SEO structure in place";
+
+  const fix =
+    score < 80
+      ? "Our redesign includes optimized meta tags, proper heading structure, and keyword-rich content."
+      : "We'll maintain your SEO foundation and add structured data for richer search results.";
+
+  return { diagnosis, fix };
+}
+
+function buildMobileInsight(score: number) {
+  const diagnosis =
+    score < 50
+      ? "Your site isn't optimized for mobile visitors"
+      : score < 80
+        ? "Some mobile experience issues detected"
+        : "Mobile experience looks solid";
+
+  const fix =
+    score < 80
+      ? "Your new site is built mobile-first with responsive layouts, touch-friendly buttons, and fast load times."
+      : "We'll keep your mobile experience strong with modern responsive design patterns.";
+
+  return { diagnosis, fix };
+}
+
+function buildCtaInsight(ctaCount: number) {
+  const severity: "red" | "yellow" | "green" =
+    ctaCount === 0 ? "red" : ctaCount < 3 ? "yellow" : "green";
+
+  const diagnosis =
+    ctaCount === 0
+      ? "No clear calls-to-action found on your site"
+      : ctaCount < 3
+        ? `Only ${ctaCount} call-to-action found — visitors may not know what to do next`
+        : `${ctaCount} calls-to-action detected`;
+
+  const fix =
+    ctaCount < 3
+      ? "Your new site features prominent CTAs in every section — phone links, contact forms, and action buttons that convert visitors into leads."
+      : "We'll place strategic CTAs throughout your new site to maximize conversions.";
+
+  return { severity, diagnosis, fix };
+}
+
+function buildAnalyticsInsight(
+  hasAnalytics: boolean,
+  analyticsDetected?: AuditResultCardProps["analyticsDetected"]
+) {
+  const severity: "red" | "yellow" | "green" = hasAnalytics
+    ? "green"
+    : "red";
+
+  let diagnosis: string;
+  if (!hasAnalytics) {
+    diagnosis =
+      "No analytics tracking detected — you have no visibility into your traffic";
+  } else {
+    const tools: string[] = [];
+    if (analyticsDetected?.ga4) tools.push("Google Analytics");
+    if (analyticsDetected?.gtm) tools.push("Tag Manager");
+    if (analyticsDetected?.other?.length)
+      tools.push(...analyticsDetected.other);
+    diagnosis = `Tracking with ${tools.join(", ")}`;
+  }
+
+  const fix = !hasAnalytics
+    ? "Your new site includes built-in analytics — see who visits, where they come from, and which pages convert."
+    : "We'll integrate your analytics dashboard so you always know how your site performs.";
+
+  return { severity, diagnosis, fix };
+}
+
+function InsightCard({
+  title,
+  score,
+  severity,
+  diagnosis,
+  fix,
+}: {
+  title: string;
+  score?: number;
+  severity: "red" | "yellow" | "green";
+  diagnosis: string;
+  fix: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative h-24 w-24">
-        <svg className="h-full w-full -rotate-90" viewBox="0 0 80 80">
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth="6"
-          />
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="6"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className={`text-xl font-bold ${color}`}>{score}</span>
-        </div>
+    <div
+      className={`rounded-lg border-l-4 p-4 ${severityStyles[severity]}`}
+    >
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        {score !== undefined && (
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-bold ${severityBadge[severity]}`}
+          >
+            {score}/100
+          </span>
+        )}
       </div>
-      <span className="text-xs font-medium text-gray-600">{label}</span>
+      <p className="mb-2 text-sm text-gray-700">{diagnosis}</p>
+      <p className="text-xs text-gray-500">{fix}</p>
     </div>
   );
 }
+
+const VALUE_PROPS = [
+  "Professional, conversion-optimized redesign",
+  "Mobile-first responsive design",
+  "SEO-optimized meta tags & content",
+  "2 SEO blog posts per week",
+  "Built-in analytics dashboard",
+  "Custom domain with free SSL",
+];
 
 export default function AuditResultCard({
   seoScore,
@@ -63,42 +172,75 @@ export default function AuditResultCard({
   ctaCount,
   hasAnalytics,
   targetUrl,
+  metaTags,
+  analyticsDetected,
 }: AuditResultCardProps) {
+  const seoInsight = buildSeoInsight(seoScore, metaTags);
+  const mobileInsight = buildMobileInsight(mobileScore);
+  const ctaInsight = buildCtaInsight(ctaCount);
+  const analyticsInsight = buildAnalyticsInsight(hasAnalytics, analyticsDetected);
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Audit Results</h3>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Website Audit Results
+        </h3>
         <p className="text-sm text-gray-500">{targetUrl}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-        <ScoreCircle score={seoScore} label="SEO Score" />
-        <ScoreCircle score={mobileScore} label="Mobile Score" />
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        <InsightCard
+          title="SEO"
+          score={seoScore}
+          severity={getSeverity(seoScore)}
+          diagnosis={seoInsight.diagnosis}
+          fix={seoInsight.fix}
+        />
+        <InsightCard
+          title="Mobile Experience"
+          score={mobileScore}
+          severity={getSeverity(mobileScore)}
+          diagnosis={mobileInsight.diagnosis}
+          fix={mobileInsight.fix}
+        />
+        <InsightCard
+          title="Calls-to-Action"
+          severity={ctaInsight.severity}
+          diagnosis={ctaInsight.diagnosis}
+          fix={ctaInsight.fix}
+        />
+        <InsightCard
+          title="Analytics"
+          severity={analyticsInsight.severity}
+          diagnosis={analyticsInsight.diagnosis}
+          fix={analyticsInsight.fix}
+        />
+      </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex h-24 w-24 items-center justify-center rounded-full border-[6px] border-gray-200">
-            <span className="text-xl font-bold text-gray-900">{ctaCount}</span>
-          </div>
-          <span className="text-xs font-medium text-gray-600">CTAs Found</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <div
-            className={`flex h-24 w-24 items-center justify-center rounded-full border-[6px] ${
-              hasAnalytics ? "border-green-500" : "border-red-500"
-            }`}
-          >
-            {hasAnalytics ? (
-              <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      <div className="rounded-lg bg-gray-50 p-4">
+        <h4 className="mb-3 text-sm font-semibold text-gray-900">
+          What your new website includes
+        </h4>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {VALUE_PROPS.map((prop) => (
+            <div key={prop} className="flex items-start gap-2">
+              <svg
+                className="mt-0.5 h-4 w-4 shrink-0 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 12.75l6 6 9-13.5"
+                />
               </svg>
-            ) : (
-              <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-          </div>
-          <span className="text-xs font-medium text-gray-600">Analytics</span>
+              <span className="text-sm text-gray-700">{prop}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

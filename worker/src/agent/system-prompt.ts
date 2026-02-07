@@ -8,14 +8,14 @@ export function buildSystemPrompt(
 
 ## Your Task
 
-Generate a complete, deployable Next.js application for a small business website. This is version ${versionNumber} of 3 — each version must have a GENUINELY DIFFERENT visual design. Your design directive is "${directive.name}".
+Generate a complete, deployable Next.js application for a small business website. Create a conversion-optimized design tailored to the business's industry.
 
 ## Technical Stack
 
 - Next.js 15+ with App Router (app/ directory)
 - TypeScript for all files
 - Tailwind CSS v4 for all styling
-- No external image URLs — use colored div placeholders, SVG shapes, or CSS gradients
+- Use extracted client images (from the audit) where they fit the content. For hero backgrounds, section visuals, and any gaps, use high-quality royalty-free images from Unsplash (source.unsplash.com) or Pexels. Choose images that reinforce the business's industry and messaging. Use \`<img>\` tags with descriptive alt text.
 - No packages beyond: next, react, react-dom, tailwindcss, @tailwindcss/postcss, postcss
 
 ## Required Files
@@ -71,21 +71,10 @@ You must apply these principles to produce a professional, distinctive design:
 - Test that text is readable without zooming on mobile
 
 ### Performance
-- No external images — use CSS gradients, SVG, or colored divs as placeholders
+- Use extracted client images and Unsplash/Pexels for visuals. Include proper alt text on all images.
 - Minimize JavaScript — prefer server components, use 'use client' only when needed
 - Proper semantic HTML (<main>, <section>, <nav>, <header>, <footer>, <article>)
 - Include alt text on all images/icons (even placeholder ones)
-
-### What Makes Each Version DIFFERENT
-This is version ${versionNumber}: "${directive.name}"
-${directive.description}
-
-You must make this version visually DISTINCT from the others:
-- Different layout structure (grid vs. single-column vs. asymmetric)
-- Different color application (dark hero vs. light hero vs. warm tones)
-- Different spacing rhythm (tight and dense vs. airy and spacious)
-- Different component shapes (sharp corners vs. rounded vs. mixed)
-- Different typography weight distribution (heavy headlines vs. elegant thin)
 
 ## Workflow
 
@@ -107,7 +96,7 @@ Follow this exact workflow:
 - Email addresses must use mailto: links
 - Include proper SEO metadata in layout.tsx (title, description, Open Graph)
 - Include clear, visible CTAs (call to action buttons)
-- DO NOT use any external image URLs or CDN links for images
+- Use extracted client images where provided. For any additional visuals, use Unsplash or Pexels URLs.
 - DO NOT use any npm packages not listed in your package.json
 - DO NOT create node_modules or .next directories
 - Write complete file contents — no "..." or "// rest of code here" shortcuts`;

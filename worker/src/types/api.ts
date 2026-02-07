@@ -6,7 +6,7 @@ export interface GenerateRequest {
   siteId: string;
   versions: {
     siteVersionId: string;
-    versionNumber: 1 | 2 | 3;
+    versionNumber: number;
     directive: DesignDirective;
   }[];
   businessContext: BusinessContext;
@@ -14,7 +14,7 @@ export interface GenerateRequest {
 }
 
 export interface VersionResult {
-  versionNumber: 1 | 2 | 3;
+  versionNumber: number;
   status: "ready" | "failed";
   previewUrl?: string;
   blobUrl?: string;

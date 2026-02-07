@@ -17,8 +17,8 @@ export const storeVersionTool = tool(
     versionNumber: z
       .number()
       .min(1)
-      .max(3)
-      .describe("Version number (1, 2, or 3)"),
+      .max(1)
+      .describe("Version number (1)"),
   },
   async (args) => {
     try {

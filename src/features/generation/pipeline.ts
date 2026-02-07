@@ -47,6 +47,7 @@ export async function runGenerationPipeline(
       metaTags: auditResult.metaTags,
       analyticsDetected: auditResult.analyticsDetected,
       dnsInfo: auditResult.dnsInfo,
+      extractedImages: auditResult.extractedImages as AuditPipelineResult["extractedImages"],
       screenshotDesktop: auditResult.screenshotDesktop,
       screenshotMobile: auditResult.screenshotMobile,
     };

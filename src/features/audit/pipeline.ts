@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { auditResults } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { crawlUrl, storeScreenshot } from "./crawler";
+import { crawlUrl, storeScreenshot, extractImages } from "./crawler";
 import {
   analyzeSeo,
   analyzeMobile,
@@ -81,6 +81,11 @@ export async function runAuditPipeline(
   const analytics = analyzeAnalytics(crawlResult.html);
   partial.analyticsDetected = analytics;
 
+  // Image extraction
+  const extractedImagesList = extractImages(crawlResult.html, targetUrl);
+  const extractedImagesData = { images: extractedImagesList };
+  partial.extractedImages = extractedImagesData;
+
   onStage({
     stage: 1,
     totalStages: TOTAL_STAGES,
@@ -97,6 +102,7 @@ export async function runAuditPipeline(
       seoScore: seo.seoScore,
       metaTags: seo.metaTags,
       analyticsDetected: analytics,
+      extractedImages: extractedImagesData,
       screenshotDesktop,
       screenshotMobile,
       completedStage: 1,
@@ -165,6 +171,7 @@ export async function runAuditPipeline(
     metaTags: seo.metaTags,
     analyticsDetected: analytics,
     dnsInfo: dns,
+    extractedImages: extractedImagesData,
     screenshotDesktop,
     screenshotMobile,
   };

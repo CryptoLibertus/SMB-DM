@@ -36,7 +36,7 @@ export default function BusinessInfoForm({ onSubmit }: BusinessInfoFormProps) {
         Tell us about your business
       </h3>
       <p className="mb-4 text-sm text-gray-500">
-        We&apos;ll use this to generate 3 custom website designs tailored to your
+        We&apos;ll use this to generate a custom website tailored to your
         business.
       </p>
 
