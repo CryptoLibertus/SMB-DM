@@ -406,7 +406,7 @@ export default function DemoPage() {
 
   // ── Go live → checkout ──────────────────────────────────────────────
   const handleGoLive = () => {
-    if (sitePreview) {
+    if (sitePreview && sitePreview.id !== "pending" && sitePreview.status === "ready") {
       router.push(`/checkout?auditId=${auditId}&version=${sitePreview.id}`);
     }
   };
@@ -429,6 +429,7 @@ export default function DemoPage() {
             <button
               onClick={() => {
                 setErrorMessage(null);
+                setDirection(1);
                 if (errorSource === "generation") {
                   setGenerationId(null);
                   setSitePreview(null);
@@ -622,6 +623,13 @@ export default function DemoPage() {
         )}
 
         {/* ── Step 5: Preview + Go Live ── */}
+        {wizardStep === 5 && (!sitePreview || sitePreview.status !== "ready") && (
+          <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-12">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            <p className="mt-4 text-sm text-text-muted">Finalizing your site...</p>
+          </div>
+        )}
+
         {wizardStep === 5 && sitePreview && sitePreview.status === "ready" && (
           <div className="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6">
             {/* Iframe preview */}

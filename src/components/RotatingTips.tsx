@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface RotatingTipsProps {
   tips: string[];
@@ -10,18 +10,21 @@ interface RotatingTipsProps {
 export default function RotatingTips({ tips, intervalMs = 4000 }: RotatingTipsProps) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setVisible(false);
-      // After fade out, change tip and fade in
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setIndex((prev) => (prev + 1) % tips.length);
         setVisible(true);
       }, 300);
     }, intervalMs);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [tips.length, intervalMs]);
 
   return (
