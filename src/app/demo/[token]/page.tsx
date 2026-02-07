@@ -107,7 +107,29 @@ export default function DemoPage() {
 
           // Check for completion
           if (data.isComplete) {
-            setPhase("audit_done");
+            // Fast-forward: if generation data exists, skip to the right phase
+            if (data.generation) {
+              const gen = data.generation;
+              setGenerationId(gen.generationId);
+              setVersions(
+                gen.versions.map((v: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: { colorPalette: string[]; layoutType: string; typography: string } | null }) => ({
+                  id: v.id,
+                  versionNumber: v.versionNumber,
+                  previewUrl: v.previewUrl || "about:blank",
+                  designMeta: v.designMeta || getDesignMeta(v.versionNumber),
+                  status: v.status,
+                }))
+              );
+
+              if (gen.stage === "complete") {
+                setPhase("versions_ready");
+              } else {
+                // Still generating — start generation polling
+                setPhase("generating");
+              }
+            } else {
+              setPhase("audit_done");
+            }
             return;
           }
         } catch {

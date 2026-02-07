@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { z } from "zod/v4";
 import { db } from "@/lib/db";
 import { auditResults } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { success, error } from "@/types";
 import { runAuditPipeline } from "@/features/audit";
 
@@ -39,6 +40,20 @@ export async function POST(req: NextRequest) {
     }
 
     const { url, tenantId } = parsed.data;
+
+    // Check for an existing audit for this URL
+    const [existing] = await db
+      .select({ id: auditResults.id })
+      .from(auditResults)
+      .where(eq(auditResults.targetUrl, url))
+      .orderBy(desc(auditResults.createdAt))
+      .limit(1);
+
+    if (existing) {
+      return NextResponse.json(
+        success({ auditId: existing.id, resumed: true })
+      );
+    }
 
     // Create AuditResult record
     const [auditResult] = await db

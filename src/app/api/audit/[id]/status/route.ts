@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { auditResults } from "@/db/schema";
+import { auditResults, sites, siteVersions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { success, error } from "@/types";
 
@@ -49,6 +49,44 @@ export async function GET(
 
   const isComplete = completed >= 4;
 
+  // When audit is complete and has a tenant, look up generation state
+  let generation: {
+    generationId: string;
+    stage: string;
+    versions: { id: string; versionNumber: number; status: string; previewUrl: string | null; designMeta: unknown }[];
+  } | undefined;
+
+  if (isComplete && row.tenantId) {
+    const [site] = await db
+      .select()
+      .from(sites)
+      .where(eq(sites.tenantId, row.tenantId))
+      .limit(1);
+
+    if (site && site.generationId) {
+      const versions = await db
+        .select()
+        .from(siteVersions)
+        .where(eq(siteVersions.siteId, site.id));
+
+      const readyCount = versions.filter((v) => v.status === "ready").length;
+      const generatingCount = versions.filter((v) => v.status === "generating").length;
+      const genComplete = generatingCount === 0 && versions.length > 0;
+
+      generation = {
+        generationId: site.generationId,
+        stage: genComplete ? (readyCount > 0 ? "complete" : "error") : "generating",
+        versions: versions.map((v) => ({
+          id: v.id,
+          versionNumber: v.versionNumber,
+          status: v.status,
+          previewUrl: v.previewUrl || null,
+          designMeta: v.designMeta,
+        })),
+      };
+    }
+  }
+
   return NextResponse.json(
     success({
       stage,
@@ -66,6 +104,7 @@ export async function GET(
         screenshotMobile: row.screenshotMobile,
         targetUrl: row.targetUrl,
       },
+      ...(generation ? { generation } : {}),
     })
   );
 }
