@@ -45,6 +45,7 @@ interface SitePreview {
 type Phase = "auditing" | "audit_done" | "generating" | "version_ready" | "error";
 
 const POLL_INTERVAL_MS = 2_000;
+const MIN_AUDIT_DISPLAY_MS = 4_000; // show progress bar for at least 4s
 
 const SUBSCRIPTION_INCLUDES = [
   "Managed hosting & daily backups",
@@ -76,6 +77,7 @@ export default function DemoPage() {
   // ── Audit polling ──────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+    const mountedAt = Date.now();
 
     async function poll() {
       while (!cancelled) {
@@ -115,6 +117,21 @@ export default function DemoPage() {
           }
 
           if (data.isComplete) {
+            // Ensure the progress bar is visible for a minimum duration
+            // so fast audits don't look like nothing happened.
+            const elapsed = Date.now() - mountedAt;
+            if (elapsed < MIN_AUDIT_DISPLAY_MS) {
+              // Animate through remaining stages before transitioning
+              const remaining = MIN_AUDIT_DISPLAY_MS - elapsed;
+              const stageDelay = remaining / AUDIT_STAGES.length;
+              for (let i = 0; i <= AUDIT_STAGES.length && !cancelled; i++) {
+                setAuditStage(i);
+                await new Promise((r) => setTimeout(r, stageDelay));
+              }
+            }
+
+            if (cancelled) return;
+
             if (data.generation) {
               const gen = data.generation;
               setGenerationId(gen.generationId);
