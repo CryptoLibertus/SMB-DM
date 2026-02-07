@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import ProgressBar from "@/components/ProgressBar";
 import AuditResultCard from "@/components/AuditResultCard";
 import AiAnalysisCard from "@/components/AiAnalysisCard";
 import BusinessInfoForm from "@/components/BusinessInfoForm";
 import WizardShell from "@/components/WizardShell";
 import RotatingTips from "@/components/RotatingTips";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 // ── Audit stages for ProgressBar ────────────────────────────────────────────
 const AUDIT_STAGES = [
@@ -68,10 +68,30 @@ const AI_POLL_INTERVAL_MS = 3_000;
 const MIN_AUDIT_DISPLAY_MS = 4_000;
 
 const SUBSCRIPTION_INCLUDES = [
-  "Managed hosting & daily backups",
+  "Live hosted website on your domain",
   "2 SEO blog posts per week",
   "Built-in analytics dashboard",
+  "5 change requests per month",
   "Custom domain with free SSL",
+  "Managed hosting & daily backups",
+];
+
+const FAQS = [
+  {
+    question: "What happens after I pay?",
+    answer:
+      "Your site deploys in about 2 minutes. You\u2019ll get a welcome email with dashboard login credentials.",
+  },
+  {
+    question: "Can I cancel?",
+    answer:
+      "Yes, anytime from your dashboard. We offer a full 30-day money-back guarantee.",
+  },
+  {
+    question: "Do I need my own domain?",
+    answer:
+      "It\u2019s optional. We provide a preview domain immediately. You can connect your own domain anytime from the dashboard.",
+  },
 ];
 
 // ── Step config ─────────────────────────────────────────────────────────────
@@ -100,11 +120,12 @@ const STEP_CONFIG: Record<number, { title: string; subtitle: string }> = {
 
 const TOTAL_STEPS = 5;
 
-export default function DemoPage() {
+function DemoContent() {
   const params = useParams();
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const auditId = params.token as string;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const canceledFromStripe = searchParams.get("canceled") === "true";
 
   // ── State ──────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState<Phase>("auditing");
@@ -134,6 +155,11 @@ export default function DemoPage() {
   } | null>(null);
   const [aiAnalysisStatus, setAiAnalysisStatus] = useState<string | null>(null);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
+
+  // ── Checkout state ───────────────────────────────────────────────────
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // ── Wizard state ──────────────────────────────────────────────────────
   const [wizardStep, setWizardStep] = useState(1);
@@ -404,12 +430,37 @@ export default function DemoPage() {
     [auditId, aiAnalysis]
   );
 
-  // ── Go live → checkout ──────────────────────────────────────────────
-  const handleGoLive = () => {
-    if (sitePreview && sitePreview.id !== "pending" && sitePreview.status === "ready") {
-      router.push(`/checkout?auditId=${auditId}&version=${sitePreview.id}`);
+  // ── Go live → Stripe checkout (direct) ─────────────────────────────
+  const handleGoLive = useCallback(async () => {
+    if (!sitePreview || sitePreview.id === "pending" || sitePreview.status !== "ready") return;
+
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId: auditId,
+          successUrl: `${window.location.origin}/success`,
+          cancelUrl: `${window.location.origin}/demo/${auditId}?canceled=true`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setCheckoutError(data.error || "Failed to create checkout session");
+        return;
+      }
+
+      window.location.href = data.data.url;
+    } catch {
+      setCheckoutError("Something went wrong. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
     }
-  };
+  }, [auditId, sitePreview]);
 
   // ── Error overlay ─────────────────────────────────────────────────────
   if (phase === "error") {
@@ -632,6 +683,17 @@ export default function DemoPage() {
 
         {wizardStep === 5 && sitePreview && sitePreview.status === "ready" && (
           <div className="mx-auto w-full max-w-4xl px-4 py-8 pb-28 sm:px-6">
+            {/* Canceled from Stripe banner */}
+            {canceledFromStripe && (
+              <div className="mb-4 rounded-xl border border-accent/30 bg-accent/5 p-4">
+                <p className="font-medium text-foreground">Changed your mind?</p>
+                <p className="mt-1 text-sm text-text-muted">
+                  No worries &mdash; your redesign is still saved. When you&apos;re ready,
+                  just hit the button below. Remember, there&apos;s a 30-day money-back guarantee.
+                </p>
+              </div>
+            )}
+
             {/* Iframe preview */}
             <div className="overflow-hidden rounded-xl border border-border-subtle bg-white shadow-sm">
               {/* Browser chrome bar */}
@@ -658,7 +720,7 @@ export default function DemoPage() {
               </div>
 
               {/* iframe */}
-              <div className="relative w-full" style={{ height: "60vh", minHeight: "400px" }}>
+              <div className="relative w-full" style={{ height: "50vh", minHeight: "360px" }}>
                 <iframe
                   src={sitePreview.previewUrl}
                   title="Site preview"
@@ -668,39 +730,105 @@ export default function DemoPage() {
               </div>
             </div>
 
-            {/* View Full Site button */}
-            <div className="mt-4 flex justify-center">
+            {/* View Full Site */}
+            <div className="mt-3 flex justify-center">
               <a
                 href={sitePreview.previewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-accent border border-border-subtle shadow-sm transition-all hover:shadow-md"
+                className="inline-flex items-center gap-2 text-sm font-medium text-accent transition-colors hover:text-accent-hover"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                View Full Site
+                Open full site in new tab
               </a>
             </div>
 
-            {/* Subscription includes */}
-            <div className="mt-4 rounded-xl border border-border-subtle bg-white p-4">
-              <h4 className="mb-2 text-sm font-semibold text-foreground">
-                Your subscription includes
-              </h4>
-              <ul className="grid gap-1.5 sm:grid-cols-2">
+            {/* ── Plan summary + trust section ── */}
+            <div className="mt-6 rounded-xl border border-border-subtle bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-foreground">Website Refresh &amp; Growth</h4>
+                  <p className="text-sm text-text-muted">Monthly subscription</p>
+                </div>
+                <p className="text-xl font-bold text-foreground">$99.95<span className="text-sm font-normal text-text-muted">/mo</span></p>
+              </div>
+
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {SUBSCRIPTION_INCLUDES.map((item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm text-text-muted">
-                    <svg className="h-3.5 w-3.5 shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <li key={item} className="flex items-start gap-2 text-sm text-foreground/80">
+                    <svg className="mt-0.5 h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                     {item}
                   </li>
                 ))}
               </ul>
+
+              {/* Money-back guarantee */}
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-center">
+                <p className="text-sm font-medium text-green-800">30-Day Money-Back Guarantee</p>
+                <p className="mt-0.5 text-xs text-green-600">Not satisfied? Full refund, no questions asked.</p>
+              </div>
+
+              {/* Trust badges */}
+              <div className="mt-3 flex items-center justify-center gap-4 text-xs text-text-muted">
+                <span className="flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Stripe Secured
+                </span>
+                <span className="text-border-subtle">|</span>
+                <span className="flex items-center gap-1">
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  256-bit SSL
+                </span>
+                <span className="text-border-subtle">|</span>
+                <span>Cancel Anytime</span>
+              </div>
             </div>
 
-            {/* Sticky bottom CTA */}
+            {/* Checkout error */}
+            {checkoutError && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3">
+                <p className="text-sm text-red-700">{checkoutError}</p>
+              </div>
+            )}
+
+            {/* FAQ accordion */}
+            <div className="mt-4 rounded-xl border border-border-subtle bg-white p-5 shadow-sm">
+              <h4 className="mb-1 text-sm font-semibold text-foreground">Frequently Asked Questions</h4>
+              <div>
+                {FAQS.map((faq, i) => (
+                  <div key={i} className="border-b border-border-subtle last:border-b-0">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                      className="flex w-full items-center justify-between py-3 text-left text-sm font-medium text-foreground"
+                    >
+                      {faq.question}
+                      <svg
+                        className={`h-4 w-4 shrink-0 text-text-muted transition-transform ${openFaq === i ? "rotate-180" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {openFaq === i && (
+                      <p className="pb-3 text-sm text-text-muted">{faq.answer}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sticky bottom CTA — direct to Stripe */}
             <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle bg-white/95 px-4 py-3 backdrop-blur-sm">
               <div className="mx-auto flex max-w-4xl items-center justify-center gap-4">
                 <span className="hidden text-sm text-text-muted sm:inline">
@@ -708,9 +836,10 @@ export default function DemoPage() {
                 </span>
                 <button
                   onClick={handleGoLive}
-                  className="rounded-xl bg-accent px-8 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]"
+                  disabled={checkoutLoading}
+                  className="rounded-xl bg-accent px-8 py-2.5 text-sm font-semibold text-white transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Go Live Now &mdash; $99.95/mo
+                  {checkoutLoading ? "Redirecting to payment..." : "Go Live Now \u2014 $99.95/mo"}
                 </button>
               </div>
             </div>
@@ -718,5 +847,19 @@ export default function DemoPage() {
         )}
       </div>
     </WizardShell>
+  );
+}
+
+export default function DemoPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        </div>
+      }
+    >
+      <DemoContent />
+    </Suspense>
   );
 }
